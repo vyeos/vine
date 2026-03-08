@@ -4,7 +4,7 @@
 - Rebuild the product as a single Next.js application using the App Router, with Elysia embedded inside the same app for HTTP-only concerns.
 - Replace the current React Router + REST + Postgres architecture with Next.js + Convex for product data and state, and Elysia only for HTTP surfaces that still need to exist.
 - Use Google as the only human sign-in method. Remove email/password, email verification, and password reset from the new product.
-- Treat this as a fresh launch: do not migrate Postgres data. Rebuild full feature parity otherwise, including workspaces, invites, posts, public/blog API keys, media uploads/thumbhash, and transactional emails that still matter.
+- Treat this as a fresh launch: do not migrate Postgres data. Rebuild full feature parity otherwise, including workspaces, invites, posts, public/blog API keys, media uploads, and any remaining notification flows.
 
 ## Key Changes
 - Frontend:
@@ -15,10 +15,11 @@
 
 - Auth and identity:
   - Implement Convex-native auth with Google as the sole provider.
+  - Base the Convex schema on `...authTables` and extend it with product-specific tables instead of recreating the current custom email/password auth schema.
   - User identity is keyed by Google email.
   - If a Google sign-in email matches an existing user record in the new system, auto-link to that user.
   - Workspace invites remain email-based, but acceptance requires the signed-in Google email to exactly match the invited email.
-  - Remove password hashes, verification tokens, and reset-token flows from the target data model and UI.
+  - Remove password hashes, verification tokens, reset-token flows, and all UI/routes related to email/password auth.
   - Keep session and authorization enforcement inside Convex so workspace/member/owner rules apply consistently across app and Elysia routes.
 
 - Backend and HTTP boundaries:
@@ -30,24 +31,25 @@
   - Internal admin/product data flows should use Convex directly, not internal REST.
 
 - Data model:
-  - Replace Drizzle/Postgres with Convex tables for:
-    - `users`
-    - `sessions`
-    - `workspaces`
-    - `workspaceMembers`
-    - `workspaceInvitations`
-    - `authors`
-    - `categories`
-    - `tags`
-    - `posts`
-    - `postBodies`
-    - `postTags`
-    - `workspaceApiKeys`
-    - `media`
-    - `emailRateLimits`
-  - Exclude legacy password, verification-link, and password-reset tables from the target schema.
+  - Replace Drizzle/Postgres with Convex schema composed of:
+    - Convex Auth tables via `...authTables`
+    - Product tables for:
+      - `workspaces`
+      - `workspaceMembers`
+      - `workspaceInvitations`
+      - `authors`
+      - `categories`
+      - `tags`
+      - `posts`
+      - `postBodies`
+      - `postTags`
+      - `workspaceApiKeys`
+      - `media`
+      - `emailRateLimits`
+  - Do not recreate legacy password, verification-link, or password-reset tables in Convex.
   - Keep posts metadata and post body content separated for query efficiency.
   - Keep R2 as object storage and move media metadata to Convex.
+  - Keep `thumbhashBase64` and `aspectRatio` only if preserving the current image placeholder UX; otherwise remove those fields and simplify media rendering.
 
 ## Migration Phases
 1. Foundation
@@ -70,6 +72,7 @@
   - media metadata
   - public API keys
   - dashboard aggregates
+- Start the schema from Convex Auth `authTables`, then layer product tables and authorization rules on top.
 - Recreate data validations and authorization checks at the Convex function boundary.
 
 4. Next.js app port
@@ -87,11 +90,11 @@
 - Do not preserve long-term internal admin REST compatibility.
 
 6. Async jobs and integrations
-- Replace Azure Functions thumbhash generation with a Convex action or queued server-side job after upload confirmation.
-- Keep transactional emails only where still relevant:
-  - workspace invitations
-  - any product notifications that remain
+- Remove Resend from auth entirely.
+- Keep an email provider only for workspace invitation delivery and any later product notifications. Resend can stay for that role, but it is no longer a required auth dependency.
 - Remove verification and password-reset email templates and sending logic.
+- Replace Azure Functions thumbhash generation with a Convex action or queued server-side job only if preserving the current media placeholder UX.
+- If thumbhash is dropped, remove the generation pipeline and simplify the media schema and image components accordingly.
 - Keep key/secret redaction in logs.
 
 7. Launch and retirement
@@ -126,7 +129,7 @@
 - Media:
   - presign upload
   - confirm upload
-  - thumbhash generation and metadata update
+  - thumbhash generation and metadata update only if that UX is retained
   - delete permissions by role/uploader
 - Public API:
   - workspace metadata
@@ -141,9 +144,12 @@
 ## Assumptions And Defaults
 - Google is the only human sign-in method in the new app.
 - Email/password, email verification, and password reset are fully removed.
+- Convex Auth is implemented using `...authTables` plus product-specific tables, not a custom recreation of the old auth schema.
 - Invite acceptance requires the signed-in Google email to match the invited email.
 - If a Google email matches an existing user record in the new system, the app reuses that user automatically.
 - No Postgres-to-Convex migration will be performed.
 - The new stack ships as one app: Next.js frontend plus embedded Elysia HTTP layer.
 - `docs/` stays separate and out of scope.
 - Full feature parity is required apart from the intentional auth simplification.
+- Resend is optional and only needed if invite/notification emails remain email-based.
+- Thumbhash is unrelated to auth and should only be kept if preserving the current media preview UX.
