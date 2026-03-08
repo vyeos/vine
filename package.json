@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "fumadocs-mdx",
-    "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
+    "postinstall": "bun run convex:codegen && fumadocs-mdx",
+    "convex:codegen": "bunx convex codegen --typecheck disable",
+    "convex:dev": "bunx convex dev",
+    "convex:deploy": "bunx convex deploy"
   },
   "dependencies": {
     "@auth/core": "^0.37.4",
