@@ -4,7 +4,20 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { canManageRole, requireWorkspaceMembership } from './lib/workspace';
 
-function toResponse(record: any) {
+async function resolveMediaUrl(ctx: any, record: any) {
+  const storageUrl = await ctx.storage.getUrl(record.storageId);
+  if (storageUrl) {
+    return storageUrl;
+  }
+  return null;
+}
+
+async function toResponse(ctx: any, record: any) {
+  const url = await resolveMediaUrl(ctx, record);
+  if (!url) {
+    return null;
+  }
+
   return {
     id: record._id,
     workspaceId: record.workspaceId,
@@ -12,8 +25,8 @@ function toResponse(record: any) {
     filename: record.filename,
     contentType: record.contentType,
     size: record.size,
-    r2Key: record.r2Key,
-    publicUrl: record.publicUrl,
+    storageId: record.storageId,
+    url,
     thumbhashBase64: record.thumbhashBase64 ?? null,
     aspectRatio: record.aspectRatio ?? null,
     createdAt: new Date(record.createdAt).toISOString(),
@@ -31,9 +44,13 @@ export const list = query({
       .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', workspace._id))
       .collect();
 
-    return media
-      .map(toResponse)
-      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+    const resolvedMedia = await Promise.all(
+      media
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map((record) => toResponse(ctx, record)),
+    );
+
+    return resolvedMedia.filter((record) => record !== null);
   },
 });
 
@@ -61,31 +78,37 @@ export const confirmUpload = mutation({
   },
   handler: async (ctx, args) => {
     const { workspace, userId } = await requireWorkspaceMembership(ctx, args.workspaceSlug);
-    const publicUrl = await ctx.storage.getUrl(args.data.storageId);
+    const url = await ctx.storage.getUrl(args.data.storageId);
 
-    if (!publicUrl) {
+    if (!url) {
       throw new Error('Uploaded file could not be resolved');
     }
 
+    const createdAt = Date.now();
     const mediaId = await ctx.db.insert('media', {
       workspaceId: workspace._id,
       uploadedByUserId: userId,
       filename: args.data.filename.trim(),
       contentType: args.data.contentType,
       size: args.data.size,
-      r2Key: String(args.data.storageId),
-      publicUrl,
       storageId: args.data.storageId,
-      createdAt: Date.now(),
+      createdAt,
       aspectRatio: args.data.aspectRatio,
     });
 
-    const media = await ctx.db.get(mediaId);
-    if (!media) {
-      throw new Error('Failed to save media');
-    }
-
-    return toResponse(media);
+    return {
+      id: mediaId,
+      workspaceId: workspace._id,
+      uploadedBy: userId,
+      filename: args.data.filename.trim(),
+      contentType: args.data.contentType,
+      size: args.data.size,
+      storageId: args.data.storageId,
+      url,
+      thumbhashBase64: null,
+      aspectRatio: args.data.aspectRatio ?? null,
+      createdAt: new Date(createdAt).toISOString(),
+    };
   },
 });
 
@@ -107,9 +130,7 @@ export const remove = mutation({
       throw new Error('You do not have permission to delete this media');
     }
 
-    if (media.storageId) {
-      await ctx.storage.delete(media.storageId);
-    }
+    await ctx.storage.delete(media.storageId);
 
     await ctx.db.delete(media._id);
     return { success: true };

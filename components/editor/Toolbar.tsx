@@ -411,7 +411,7 @@ function MediaThumbnail({
 }: {
   media: {
     id: string;
-    publicUrl: string;
+    url: string;
     filename: string;
     thumbhashBase64?: string | null;
   };
@@ -471,7 +471,7 @@ function MediaThumbnail({
             />
           )}
           <img
-            src={media.publicUrl}
+            src={media.url}
             alt={media.filename}
             className={cn(
               'w-full h-full object-cover transition-opacity duration-300',
@@ -499,7 +499,7 @@ function MediaThumbnail({
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={media.publicUrl}
+              src={media.url}
               alt={media.filename}
               className='max-w-full max-h-[80vh] object-contain rounded-lg'
             />
@@ -570,7 +570,7 @@ const ImageButton = forwardRef<ImageButtonRef, { editor: Editor }>(
       })
         .then((media) => {
           if (media) {
-            insertMediaImage(media.publicUrl);
+            insertMediaImage(media.url);
           }
         })
         .catch(() => {
@@ -711,7 +711,7 @@ const ImageButton = forwardRef<ImageButtonRef, { editor: Editor }>(
                           key={media.id}
                           media={media}
                           onInsert={(mediaId) =>
-                            insertMediaImage(media.publicUrl, mediaId)
+                            insertMediaImage(media.url, mediaId)
                           }
                         />
                       ))}

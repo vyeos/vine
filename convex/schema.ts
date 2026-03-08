@@ -108,15 +108,11 @@ export default defineSchema({
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
-    r2Key: v.string(),
-    publicUrl: v.string(),
-    storageId: v.optional(v.id('_storage')),
+    storageId: v.id('_storage'),
     createdAt: v.number(),
     thumbhashBase64: v.optional(v.string()),
     aspectRatio: v.optional(v.number()),
-  })
-    .index('by_workspace_id', ['workspaceId'])
-    .index('by_r2_key', ['r2Key']),
+  }).index('by_workspace_id', ['workspaceId']),
   emailRateLimits: defineTable({
     identifier: v.string(),
     type: v.string(),

@@ -76,7 +76,7 @@ function MediaItemCard({
           onClick={() => onCopyUrl(media)}
         >
           {copied ? (
-            <Check className='w-3.5 h-3.5 text-green-500' />
+            <Check className='w-3.5 h-3.5 text-primary' />
           ) : (
             <Copy className='w-3.5 h-3.5' />
           )}
@@ -116,7 +116,7 @@ function MediaItemCard({
       </div>
 
       <ImagePreview
-        src={media.publicUrl}
+        src={media.url}
         alt={media.filename}
         className='bg-muted'
         filename={media.filename}
@@ -236,7 +236,7 @@ export default function MediaManager() {
   };
 
   const handleCopyUrl = useCallback((media: Media) => {
-    navigator.clipboard.writeText(media.publicUrl).then(() => {
+    navigator.clipboard.writeText(media.url).then(() => {
       setCopiedId(media.id);
       setTimeout(() => setCopiedId(null), 2000);
     });
@@ -500,7 +500,7 @@ export default function MediaManager() {
 
       {previewMedia && (
         <ImagePreview
-          src={previewMedia.publicUrl}
+          src={previewMedia.url}
           alt={previewMedia.filename}
           filename={previewMedia.filename}
           thumbhashBase64={previewMedia.thumbhashBase64}
