@@ -112,14 +112,22 @@ export function DashboardPage() {
     <ScrollArea className='h-full p-8'>
       <div className='flex flex-col gap-10 pb-16 pr-4'>
         <section className='space-y-2 px-4'>
-          <p className='text-3xl font-semibold tracking-tight'>
-            {greeting}{' '}
-            {userLoading ? <Skeleton className='h-8 w-24 rounded-md' /> : username}!
-          </p>
-          <p className='text-base text-muted-foreground'>
-            Here’s what’s happening in{' '}
-            {userLoading ? <Skeleton className='h-8 w-24 rounded-md' /> : workspaceName}
-          </p>
+          <div className='flex items-center gap-2 text-3xl font-semibold tracking-tight'>
+            <span>{greeting}</span>
+            {userLoading ? (
+              <Skeleton className='h-8 w-24 rounded-md' />
+            ) : (
+              <span>{username}!</span>
+            )}
+          </div>
+          <div className='flex items-center gap-2 text-base text-muted-foreground'>
+            <span>Here’s what’s happening in</span>
+            {userLoading ? (
+              <Skeleton className='h-6 w-32 rounded-md' />
+            ) : (
+              <span>{workspaceName}</span>
+            )}
+          </div>
         </section>
 
         <section className='space-y-4 px-4'>
