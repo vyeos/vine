@@ -65,11 +65,13 @@ function RoleBadge({ role }: { role: MemberRole }) {
 
 export default function MemberList({
   members,
+  invitations,
   currentUserRole,
   currentUserId,
   workspaceSlug,
   onEdit,
   onRemove,
+  onRevokeInvitation,
   onLeave,
 }: Props) {
   const [search, setSearch] = useState('');
@@ -182,6 +184,53 @@ export default function MemberList({
             </div>
           )}
         </div>
+
+        {invitations.length > 0 && (
+          <div>
+            <div className='mb-3 text-sm font-medium'>Pending Invitations</div>
+            <div className='divide-y'>
+              {invitations.map((invitation, idx) => (
+                <div
+                  key={invitation.id}
+                  className='flex items-center justify-between py-3 animate-in fade-in-50 slide-in-from-bottom-1 duration-300'
+                  style={{ animationDelay: `${Math.min(idx, 6) * 40}ms` }}
+                >
+                  <div className='flex min-w-0 items-center gap-3'>
+                    <Avatar className='h-9 w-9'>
+                      <AvatarFallback className='bg-muted text-muted-foreground text-xs'>
+                        {invitation.email.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className='min-w-0'>
+                      <div className='truncate text-sm font-medium text-muted-foreground'>
+                        {invitation.email}
+                      </div>
+                      <div className='text-xs text-muted-foreground/70'>
+                        Invited {new Date(invitation.invitedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-3'>
+                    {canManageMember(currentUserRole, invitation.role) && (
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='text-destructive hover:text-destructive hover:bg-destructive/10'
+                        onClick={() => onRevokeInvitation(invitation)}
+                      >
+                        Revoke
+                      </Button>
+                    )}
+                    <RoleBadge role={invitation.role} />
+                    <Badge variant='outline' className='text-xs'>
+                      Pending
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

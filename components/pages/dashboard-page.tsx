@@ -1,8 +1,10 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { PingingDotChart } from '@/components/ui/pinging-dot-chart';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardHeatmap } from '@/hooks/useDashboardHeatmap';
@@ -68,6 +70,7 @@ function RecentPostsSkeleton() {
 
 export function DashboardPage() {
   const greeting = getGreeting();
+  const router = useRouter();
   const workspaceSlug = useWorkspaceSlug();
   const { data: user, isLoading: userLoading } = useAuth();
   const { data: workspace } = useWorkspaceVerification(workspaceSlug);
@@ -87,7 +90,22 @@ export function DashboardPage() {
 
   const renderRecentPost = (post: DashboardRecentPost, index: number, total: number) => (
     <div key={post.id ?? post.title}>
-      <div className='flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between'>
+      <div
+        role='button'
+        tabIndex={0}
+        onClick={() => {
+          if (workspaceSlug && post.slug) {
+            router.push(`/dashboard/${workspaceSlug}/editor/${post.slug}`);
+          }
+        }}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && workspaceSlug && post.slug) {
+            e.preventDefault();
+            router.push(`/dashboard/${workspaceSlug}/editor/${post.slug}`);
+          }
+        }}
+        className='flex flex-col gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:flex-row sm:items-center sm:justify-between'
+      >
         <div className='space-y-1'>
           <p className='text-base font-medium text-foreground'>{post.title}</p>
           <div className='flex flex-wrap items-center gap-2'>

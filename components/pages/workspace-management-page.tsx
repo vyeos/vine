@@ -113,7 +113,15 @@ export function WorkspaceManagementPage() {
               return (
                 <div
                   key={workspace.id}
-                  className='group relative flex cursor-pointer flex-col items-center'
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleNavigateToWorkspace(workspace.slug);
+                    }
+                  }}
+                  className='group relative flex cursor-pointer flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xl'
                   onClick={() => handleNavigateToWorkspace(workspace.slug)}
                 >
                   <div
@@ -250,7 +258,15 @@ function AddWorkspaceCard({
 }) {
   return (
     <div
-      className='group flex cursor-pointer flex-col items-center'
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setShowCreateDialog(true);
+        }
+      }}
+      className='group flex cursor-pointer flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xl'
       onClick={() => setShowCreateDialog(true)}
     >
       <div className='mb-4 flex h-48 w-48 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/40 transition-all group-hover:border-primary group-hover:bg-muted/60'>

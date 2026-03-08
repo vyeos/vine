@@ -8,7 +8,7 @@ import {
   useRef,
 } from 'react';
 import type { Editor } from '@tiptap/react';
-import { loadContent, saveContent } from './persistence';
+import { loadContent, saveContent, createDebouncedSaveContent } from './persistence';
 import type { ProseMirrorJSON } from './persistence';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toolbar } from './Toolbar';
@@ -79,6 +79,7 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
     const [pendingImport, setPendingImport] = useState<string | null>(null);
     const dragCounterRef = useRef(0);
     const editorRefForPaste = useRef<Editor | null>(null);
+    const debouncedSaveRef = useRef(createDebouncedSaveContent(500));
 
     const applyMarkdownImport = useCallback(
       (raw: string, editorInstance: Editor) => {
@@ -134,7 +135,7 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
       onUpdate: ({ editor }) => {
         if (!disablePersistence) {
           const content = editor.getJSON();
-          saveContent(content, workspaceSlug);
+          debouncedSaveRef.current(content, workspaceSlug);
         }
       },
       editorProps: {
@@ -188,6 +189,14 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
       editorRefForPaste.current = editor;
       editorRefForDrop.current = editor;
     }, [editor]);
+
+    // Flush debounced save on unmount so no keystrokes are lost
+    useEffect(() => {
+      const debouncedSave = debouncedSaveRef.current;
+      return () => {
+        debouncedSave.flush();
+      };
+    }, []);
 
     useImperativeHandle(ref, () => ({
       editor,

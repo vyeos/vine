@@ -181,8 +181,15 @@ export function DataTable<TData, TValue>({
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && 'selected'}
+                      tabIndex={0}
                       onClick={() => handleRowClick(row)}
-                      className='cursor-pointer'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleRowClick(row);
+                        }
+                      }}
+                      className='cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>

@@ -45,12 +45,16 @@ export default function Hero({ badgeText }: { badgeText: string }) {
           alt='Vine Dashboard Dark'
           className='hidden object-cover dark:block'
           fill
+          priority
+          sizes='(max-width: 1280px) 100vw, 1280px'
         />
         <Image
           src='/vine-dashboard-light.png'
           alt='Vine Dashboard Light'
           className='block object-cover dark:hidden'
           fill
+          priority
+          sizes='(max-width: 1280px) 100vw, 1280px'
         />
       </div>
     </div>

@@ -1,13 +1,15 @@
 import { NodeViewWrapper } from '@tiptap/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { thumbHashToDataURL } from 'thumbhash';
 import { useWorkspaceSlug } from '@/hooks/useWorkspaceSlug';
 import { useMedia } from '@/hooks/useMedia';
 import type { NodeViewProps } from '@tiptap/react';
+import { ImageIcon } from 'lucide-react';
 
-export function ImageNodeView({ node }: NodeViewProps) {
+export function ImageNodeView({ node, updateAttributes, selected }: NodeViewProps) {
   const src = node.attrs.src;
+  const alt = (node.attrs.alt as string) || '';
   const mediaId = node.attrs['data-media-id'];
   const workspaceSlug = useWorkspaceSlug();
 
@@ -45,6 +47,13 @@ export function ImageNodeView({ node }: NodeViewProps) {
     setImageLoaded(true);
   };
 
+  const handleAltChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      updateAttributes({ alt: e.target.value });
+    },
+    [updateAttributes],
+  );
+
   const containerStyle = aspectRatio
     ? { aspectRatio: aspectRatio.toString() }
     : undefined;
@@ -52,7 +61,10 @@ export function ImageNodeView({ node }: NodeViewProps) {
   return (
     <NodeViewWrapper className='tiptap-image-wrapper'>
       <div
-        className='relative overflow-hidden rounded-lg'
+        className={cn(
+          'relative overflow-hidden rounded-lg ring-offset-background transition-shadow',
+          selected && 'ring-2 ring-primary ring-offset-2',
+        )}
         style={containerStyle}
       >
         {placeholderUrl && !imageLoaded && (
@@ -65,7 +77,7 @@ export function ImageNodeView({ node }: NodeViewProps) {
         )}
         <img
           src={src}
-          alt=''
+          alt={alt}
           className={cn(
             'tiptap-image w-full h-full object-cover transition-opacity duration-300',
             imageLoaded ? 'opacity-100' : 'opacity-0',
@@ -73,6 +85,18 @@ export function ImageNodeView({ node }: NodeViewProps) {
           onLoad={handleImageLoad}
         />
       </div>
+      {selected && (
+        <div className='mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground'>
+          <ImageIcon className='h-3 w-3 shrink-0' />
+          <input
+            type='text'
+            value={alt}
+            onChange={handleAltChange}
+            placeholder='Add alt text for accessibility...'
+            className='flex-1 bg-transparent outline-none placeholder:text-muted-foreground/60'
+          />
+        </div>
+      )}
     </NodeViewWrapper>
   );
 }

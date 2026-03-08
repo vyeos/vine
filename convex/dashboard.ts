@@ -77,6 +77,7 @@ export const stats = query({
       .slice(0, 5)
       .map((post) => ({
         id: post._id,
+        slug: post.slug,
         title: post.title,
         status: post.status,
         publishedAt: post.publishedAt

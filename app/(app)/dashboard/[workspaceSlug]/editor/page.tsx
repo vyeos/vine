@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from '@/components/ErrorFallback';
 import { Tiptap } from '@/components/editor/Tiptap';
 import { useEditorContext } from '@/components/editor/editor-context';
 
 export default function EditorPage() {
-  const { workspaceSlug, editorRef } = useEditorContext();
+  const { workspaceSlug, editorRef, hasUnsavedChangesRef, shouldSkipBlockerRef } = useEditorContext();
   const [markdownImport] = useState<string | undefined>(() => {
     if (typeof window === 'undefined' || !workspaceSlug) {
       return undefined;
@@ -20,6 +20,19 @@ export default function EditorPage() {
     }
     return raw;
   });
+
+  // Warn before browser-level navigation (refresh, close tab) if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!shouldSkipBlockerRef.current && hasUnsavedChangesRef.current?.()) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChangesRef, shouldSkipBlockerRef]);
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>

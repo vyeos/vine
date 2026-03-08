@@ -21,6 +21,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Empty,
   EmptyContent,
   EmptyDescription,
@@ -46,6 +54,7 @@ export default function AuthorList({
 }: Props) {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -58,12 +67,15 @@ export default function AuthorList({
     );
   }, [authors, search]);
 
-  // Replace any window.confirm/alert with a straight callback
   const handleDeleteClick = (id: string) => {
-    // Before:
-    // if (window.confirm('Are you sure?')) { onDeleteAuthor(id) }
-    // After:
-    onDeleteAuthor(id);
+    setPendingDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (pendingDeleteId) {
+      onDeleteAuthor(pendingDeleteId);
+      setPendingDeleteId(null);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -164,7 +176,15 @@ export default function AuthorList({
             {filtered.map((author, idx) => (
               <div
                 key={author.id ?? idx}
-                className='group flex items-center justify-between py-3 px-3 animate-in fade-in-50 slide-in-from-bottom-1 duration-300 hover:bg-muted/30 cursor-pointer'
+                role='button'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onEditAuthor(author);
+                  }
+                }}
+                className='group flex items-center justify-between py-3 px-3 animate-in fade-in-50 slide-in-from-bottom-1 duration-300 hover:bg-muted/30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                 style={{ animationDelay: `${Math.min(idx, 6) * 40}ms` }}
                 onClick={() => onEditAuthor(author)}
               >
@@ -257,6 +277,25 @@ export default function AuthorList({
           </div>
         )}
       </CardContent>
+
+      <Dialog open={!!pendingDeleteId} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete author?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The author profile will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setPendingDeleteId(null)}>
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

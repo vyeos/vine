@@ -50,17 +50,17 @@ const Footer = () => {
             {/* Copyright */}
             <span className="text-muted-foreground">
               Crafted with 😻 by{" "}
-              <Link href="https://x.com/ni3rav" target="_blank">
-                Nirav
+              <Link href="https://x.com/vye_os" target="_blank">
+                Vyeos
               </Link>{" "}
-              and{" "}
-              <Link href="https://x.com/supal_v" target="_blank">
-                Supal
-              </Link>
             </span>
 
             <div className="flex items-center gap-5 text-muted-foreground">
-              <Link href="https://github.com/vyeos/vine" target="_blank">
+              <Link
+                href="https://github.com/vyeos/vine"
+                target="_blank"
+                aria-label="Vine on GitHub"
+              >
                 <GithubIcon className="h-5 w-5" />
               </Link>
             </div>

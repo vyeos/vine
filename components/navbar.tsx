@@ -10,7 +10,7 @@ const Navbar = () => {
     <nav className='sticky top-0 z-50 h-16 border-b bg-background/80 backdrop-blur-md'>
       <div className='mx-auto flex h-full max-w-(--breakpoint-xl) items-center justify-between px-4 sm:px-6 lg:px-8'>
         <div className='flex items-center gap-12'>
-          <div className='flex items-center justify-center p-2'>
+          <Link href='/' className='flex items-center justify-center p-2'>
             <Image
               src='/vine.png'
               alt='Vine Logo'
@@ -18,7 +18,7 @@ const Navbar = () => {
               height={32}
               className='object-contain'
             />
-          </div>
+          </Link>
           <NavMenu className='hidden md:block' />
         </div>
 

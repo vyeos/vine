@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEditorContext } from '@/components/editor/editor-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -24,6 +24,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, Loader2, Info } from 'lucide-react';
 import AuthorSelect from '@/components/Author/AuthorSelect';
@@ -67,6 +75,8 @@ export function EditorSidebar() {
     postSlug,
     originalContent,
     shouldSkipBlockerRef,
+    saveRef,
+    hasUnsavedChangesRef,
   } = useEditorContext();
 
   const createPostMutation = useCreatePost(workspaceSlug);
@@ -251,7 +261,7 @@ export function EditorSidebar() {
     syncToParent();
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const isValidForm = await form.trigger();
     if (!isValidForm) {
       toast.error('Please fix the form errors before saving');
@@ -357,7 +367,7 @@ export function EditorSidebar() {
         },
       });
     }
-  };
+  }, [form, editorRef, getValues, isEditing, postSlug, workspaceSlug, createPostMutation, updatePostMutation, setMetadata, shouldSkipBlockerRef, router]);
 
   const handleClear = () => {
     const editor = editorRef.current?.editor;
@@ -406,8 +416,28 @@ export function EditorSidebar() {
   const isSaveDisabled =
     !isValid || isSaving || !editor || editorIsEmpty || !hasChanges;
 
+  // Register save handler and unsaved-changes checker on context refs for Ctrl+S and back-button
+  useEffect(() => {
+    saveRef.current = () => {
+      if (!isSaveDisabled) {
+        handleSave();
+      }
+    };
+    return () => {
+      saveRef.current = null;
+    };
+  }, [isSaveDisabled, handleSave, saveRef]);
+
+  useEffect(() => {
+    hasUnsavedChangesRef.current = () => hasChanges;
+    return () => {
+      hasUnsavedChangesRef.current = null;
+    };
+  }, [hasChanges, hasUnsavedChangesRef]);
+
   const [activeTab, setActiveTab] = useQueryParam('tab', 'metadata');
   const [editorText, setEditorText] = React.useState('');
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -888,13 +918,35 @@ export function EditorSidebar() {
             variant='outline'
             size='sm'
             className='flex-1'
-            onClick={handleClear}
+            onClick={() => setShowClearDialog(true)}
             disabled={isSaving}
           >
             Clear
           </Button>
         </div>
       </SidebarFooter>
+
+      <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear Editor</DialogTitle>
+            <DialogDescription>
+              This will reset the editor content and all metadata fields. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setShowClearDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={() => {
+              handleClear();
+              setShowClearDialog(false);
+            }}>
+              Clear Everything
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Tabs>
   );
 }

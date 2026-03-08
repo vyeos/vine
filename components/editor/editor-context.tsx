@@ -21,6 +21,8 @@ export type EditorContextValue = {
   originalContent: string | null;
   setOriginalContent: React.Dispatch<React.SetStateAction<string | null>>;
   shouldSkipBlockerRef: { current: boolean };
+  saveRef: React.RefObject<(() => void) | null>;
+  hasUnsavedChangesRef: React.RefObject<(() => boolean) | null>;
 };
 
 const EditorContext = React.createContext<EditorContextValue | null>(null);

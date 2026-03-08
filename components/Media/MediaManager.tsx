@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -24,6 +25,8 @@ import {
   Trash2,
   Loader2,
   Expand,
+  Copy,
+  Check,
 } from 'lucide-react';
 import {
   Empty,
@@ -47,20 +50,37 @@ function MediaItemCard({
   media,
   onDelete,
   onPreview,
+  onCopyUrl,
   formatFileSize,
   canDelete,
+  copied,
 }: {
   media: Media;
   onDelete: (m: Media) => void;
   onPreview: (m: Media) => void;
+  onCopyUrl: (m: Media) => void;
   formatFileSize: (bytes: number) => string;
   canDelete: boolean;
+  copied: boolean;
 }) {
   return (
     <div className='group relative border border-foreground/5 rounded-lg overflow-hidden break-inside-avoid mb-3'>
       <div className='absolute inset-0 z-[5] bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out pointer-events-none' />
 
       <div className='absolute top-0 right-0 z-10 p-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out translate-y-1 group-hover:translate-y-0'>
+        <Button
+          size='icon'
+          variant='secondary'
+          aria-label={copied ? 'Copied!' : 'Copy URL'}
+          className='h-7 w-7 transition-transform duration-200 hover:scale-105'
+          onClick={() => onCopyUrl(media)}
+        >
+          {copied ? (
+            <Check className='w-3.5 h-3.5 text-green-500' />
+          ) : (
+            <Copy className='w-3.5 h-3.5' />
+          )}
+        </Button>
         <Button
           size='icon'
           variant='secondary'
@@ -114,6 +134,8 @@ export default function MediaManager() {
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [previewMedia, setPreviewMedia] = useState<Media | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [search, setSearch] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const { data: user } = useAuth();
@@ -212,6 +234,19 @@ export default function MediaManager() {
   const handlePreviewClick = (media: Media) => {
     setPreviewMedia(media);
   };
+
+  const handleCopyUrl = useCallback((media: Media) => {
+    navigator.clipboard.writeText(media.publicUrl).then(() => {
+      setCopiedId(media.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }, []);
+
+  const filteredMedia = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return mediaItems;
+    return mediaItems.filter((m) => m.filename.toLowerCase().includes(q));
+  }, [mediaItems, search]);
 
   const confirmDelete = () => {
     if (selectedMedia && workspaceSlug) {
@@ -318,23 +353,34 @@ export default function MediaManager() {
                 <CardDescription>Manage your media files</CardDescription>
               </div>
               {mediaItems.length > 0 && (
-                <Button
-                  onClick={handleUploadMedia}
-                  size='sm'
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                      Uploading
-                    </>
-                  ) : (
-                    <>
-                      <Plus />
-                      Upload Media
-                    </>
-                  )}
-                </Button>
+                <div className='flex items-center gap-2'>
+                  <div className='relative'>
+                    <ImageIcon className='absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none' />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder='Search media...'
+                      className='pl-8 h-9 w-48'
+                    />
+                  </div>
+                  <Button
+                    onClick={handleUploadMedia}
+                    size='sm'
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                        Uploading
+                      </>
+                    ) : (
+                      <>
+                        <Plus />
+                        Upload Media
+                      </>
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
           </CardHeader>
@@ -389,17 +435,32 @@ export default function MediaManager() {
                   </Button>
                 </EmptyContent>
               </Empty>
+            ) : filteredMedia.length === 0 ? (
+              <Empty className='border-dashed animate-in fade-in-50'>
+                <EmptyHeader>
+                  <EmptyMedia variant='icon'>
+                    <ImageIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>No results</EmptyTitle>
+                  <EmptyDescription>
+                    No media files match &ldquo;{search}&rdquo;. Try a different
+                    search term.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             ) : (
               <ScrollArea className='h-[calc(100vh-16rem)] [&_[data-slot=scroll-area-thumb]]:bg-primary/15'>
                 <div className='columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 p-1 [column-width:180px]'>
-                  {mediaItems.map((media) => (
+                  {filteredMedia.map((media) => (
                     <MediaItemCard
                       key={media.id}
                       media={media}
                       onDelete={handleDeleteClick}
                       onPreview={handlePreviewClick}
+                      onCopyUrl={handleCopyUrl}
                       formatFileSize={formatFileSize}
                       canDelete={canDeleteMedia(media)}
+                      copied={copiedId === media.id}
                     />
                   ))}
                 </div>

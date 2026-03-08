@@ -92,6 +92,55 @@ export const saveContent = (content: ProseMirrorJSON, workspaceSlug?: string) =>
 };
 
 /**
+ * Creates a debounced version of saveContent to avoid excessive
+ * localStorage writes on every keystroke. Flushes immediately on
+ * page unload so no data is lost.
+ */
+export const createDebouncedSaveContent = (delayMs = 500) => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let pendingContent: ProseMirrorJSON | null = null;
+  let pendingSlug: string | undefined;
+
+  const flush = () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    if (pendingContent !== null) {
+      saveContent(pendingContent, pendingSlug);
+      pendingContent = null;
+    }
+  };
+
+  // Flush on page unload to prevent data loss
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', flush);
+  }
+
+  const debouncedSave = (content: ProseMirrorJSON, workspaceSlug?: string) => {
+    pendingContent = content;
+    pendingSlug = workspaceSlug;
+
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(flush, delayMs);
+  };
+
+  debouncedSave.flush = flush;
+  debouncedSave.cancel = () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    pendingContent = null;
+  };
+
+  return debouncedSave;
+};
+
+/**
  * Loads content for a specific workspace
  * Returns ProseMirror JSON format
  */

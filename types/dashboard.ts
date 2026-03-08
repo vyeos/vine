@@ -6,6 +6,7 @@ export type DashboardStatSummary = {
 
 export type DashboardRecentPost = {
   id: string;
+  slug: string;
   title: string;
   status: string;
   publishedAt: string;

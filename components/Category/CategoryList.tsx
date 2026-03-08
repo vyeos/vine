@@ -20,6 +20,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Empty,
   EmptyContent,
   EmptyDescription,
@@ -46,6 +54,7 @@ export default function CategoryList({
 }: Props) {
   const [search, setSearch] = useState('');
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
+  const [pendingDeleteSlug, setPendingDeleteSlug] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -56,9 +65,15 @@ export default function CategoryList({
     );
   }, [categories, search]);
 
-  // FIX: This handler now correctly receives a slug
   const handleDeleteClick = (slug: string) => {
-    onDeleteCategory(slug);
+    setPendingDeleteSlug(slug);
+  };
+
+  const confirmDelete = () => {
+    if (pendingDeleteSlug) {
+      onDeleteCategory(pendingDeleteSlug);
+      setPendingDeleteSlug(null);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -160,7 +175,15 @@ export default function CategoryList({
             {filtered.map((category, idx) => (
               <div
                 key={category.id ?? idx}
-                className='group flex items-center justify-between py-3 px-3 animate-in fade-in-50 slide-in-from-bottom-1 duration-300 hover:bg-muted/30 cursor-pointer'
+                role='button'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onEditCategory(category);
+                  }
+                }}
+                className='group flex items-center justify-between py-3 px-3 animate-in fade-in-50 slide-in-from-bottom-1 duration-300 hover:bg-muted/30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                 style={{ animationDelay: `${Math.min(idx, 6) * 40}ms` }}
                 onClick={() => onEditCategory(category)}
               >
@@ -246,6 +269,25 @@ export default function CategoryList({
           </div>
         )}
       </CardContent>
+
+      <Dialog open={!!pendingDeleteSlug} onOpenChange={(open) => !open && setPendingDeleteSlug(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete category?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The category will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setPendingDeleteSlug(null)}>
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

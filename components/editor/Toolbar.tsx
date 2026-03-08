@@ -1053,28 +1053,28 @@ const AlignmentControls = ({ editor }: { editor: Editor }) => (
   <>
     <ToolbarButton
       onClick={() => editor.chain().focus().setTextAlign('left').run()}
-      isActive={false}
+      isActive={editor.isActive({ textAlign: 'left' })}
       title='Align Left'
     >
       <AlignLeft className='w-4 h-4' />
     </ToolbarButton>
     <ToolbarButton
       onClick={() => editor.chain().focus().setTextAlign('center').run()}
-      isActive={false}
+      isActive={editor.isActive({ textAlign: 'center' })}
       title='Align Center'
     >
       <AlignCenter className='w-4 h-4' />
     </ToolbarButton>
     <ToolbarButton
       onClick={() => editor.chain().focus().setTextAlign('right').run()}
-      isActive={false}
+      isActive={editor.isActive({ textAlign: 'right' })}
       title='Align Right'
     >
       <AlignRight className='w-4 h-4' />
     </ToolbarButton>
     <ToolbarButton
       onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-      isActive={false}
+      isActive={editor.isActive({ textAlign: 'justify' })}
       title='Justify'
     >
       <AlignJustify className='w-4 h-4' />

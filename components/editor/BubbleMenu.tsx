@@ -6,10 +6,20 @@ import {
   Underline as UnderlineIcon,
   Strikethrough,
   Code,
+  Link as LinkIcon,
+  Unlink,
   type LucideIcon,
 } from 'lucide-react';
-import { memo, type ComponentProps } from 'react';
+import { memo, useState, type ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { z } from 'zod';
 
 interface EditorBubbleMenuProps {
   editor: Editor;
@@ -62,6 +72,99 @@ const MenuButton = ({
   </button>
 );
 
+const urlSchema = z.string().url();
+
+const BubbleLinkButton = ({ editor }: { editor: Editor }) => {
+  const [linkUrl, setLinkUrl] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState('');
+
+  const setLink = () => {
+    if (linkUrl === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      setIsOpen(false);
+      setError('');
+      return;
+    }
+
+    const result = urlSchema.safeParse(linkUrl);
+    if (!result.success) {
+      setError('Please enter a valid URL');
+      return;
+    }
+
+    editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
+    setLinkUrl('');
+    setIsOpen(false);
+    setError('');
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      setLinkUrl(editor.getAttributes('link').href || '');
+      setError('');
+    }
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <button
+          type='button'
+          title='Link'
+          onMouseDown={(event) => event.preventDefault()}
+          className={cn(
+            'flex size-8 items-center justify-center rounded-md text-foreground/80 transition-colors hover:bg-foreground/10',
+            editor.isActive('link') && 'bg-foreground/10 text-primary',
+          )}
+        >
+          <LinkIcon className='h-4 w-4' />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className='w-72' side='top'>
+        <div className='space-y-2'>
+          <Input
+            placeholder='https://example.com'
+            value={linkUrl}
+            onChange={(e) => {
+              setLinkUrl(e.target.value);
+              if (error) setError('');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                setLink();
+              }
+            }}
+            className={cn('h-8 text-sm', error && 'border-destructive')}
+            autoFocus
+          />
+          {error && <p className='text-xs text-destructive'>{error}</p>}
+          <div className='flex gap-2'>
+            <Button onClick={setLink} size='sm' className='flex-1 h-7 text-xs'>
+              {editor.isActive('link') ? 'Update' : 'Insert'}
+            </Button>
+            {editor.isActive('link') && (
+              <Button
+                onClick={() => {
+                  editor.chain().focus().unsetLink().run();
+                  setIsOpen(false);
+                }}
+                size='sm'
+                variant='outline'
+                className='h-7'
+              >
+                <Unlink className='w-3 h-3' />
+              </Button>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 export const EditorBubbleMenu = memo(({ editor }: EditorBubbleMenuProps) => {
   return (
     <TiptapBubbleMenu
@@ -100,6 +203,8 @@ export const EditorBubbleMenu = memo(({ editor }: EditorBubbleMenuProps) => {
         isActive={editor.isActive('code')}
         icon={Code}
       />
+      <div className='mx-0.5 h-5 w-px bg-foreground/10' />
+      <BubbleLinkButton editor={editor} />
     </TiptapBubbleMenu>
   );
 });
