@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { ReactNode } from "react";
@@ -18,7 +19,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${GeistSans.className} ${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body>
-        <Providers>{children}</Providers>
+        <ConvexAuthNextjsServerProvider>
+          <Providers>{children}</Providers>
+        </ConvexAuthNextjsServerProvider>
       </body>
     </html>
   );
