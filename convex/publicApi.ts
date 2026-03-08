@@ -2,30 +2,37 @@
 
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
-import { getWorkspaceBySlug } from './lib/workspace';
 
 async function sha256(input: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function validateApiKey(ctx: any, workspaceSlug: string, apiKey: string) {
-  const workspace = await getWorkspaceBySlug(ctx, workspaceSlug.trim());
-  if (!workspace) {
-    return null;
-  }
-
+async function validateApiKey(ctx: any, apiKey: string) {
   const hashedKey = await sha256(apiKey.trim());
   const record = await ctx.db
     .query('workspaceApiKeys')
     .withIndex('by_hashed_key', (q: any) => q.eq('hashedKey', hashedKey))
     .unique();
 
-  if (!record || record.workspaceId !== workspace._id) {
+  if (!record) {
+    return null;
+  }
+
+  const workspace = await ctx.db.get(record.workspaceId);
+  if (!workspace) {
     return null;
   }
 
   return { workspace, apiKeyRecord: record };
+}
+
+function toWorkspaceMeta(workspace: any) {
+  return {
+    id: workspace._id,
+    name: workspace.name,
+    slug: workspace.slug,
+  };
 }
 
 function isPublicPost(post: any) {
@@ -117,11 +124,10 @@ async function getPublicPostDetail(ctx: any, post: any) {
 
 export const listPosts = query({
   args: {
-    workspaceSlug: v.string(),
     apiKey: v.string(),
   },
   handler: async (ctx, args) => {
-    const access = await validateApiKey(ctx, args.workspaceSlug, args.apiKey);
+    const access = await validateApiKey(ctx, args.apiKey);
     if (!access) {
       return null;
     }
@@ -135,11 +141,7 @@ export const listPosts = query({
     const items = await Promise.all(publicPosts.map((post) => getPublicPostListItem(ctx, post)));
 
     return {
-      workspace: {
-        id: access.workspace._id,
-        name: access.workspace.name,
-        slug: access.workspace.slug,
-      },
+      workspace: toWorkspaceMeta(access.workspace),
       posts: items.sort((a, b) => {
         const aDate = a.publishedAt ?? a.updatedAt;
         const bDate = b.publishedAt ?? b.updatedAt;
@@ -151,12 +153,11 @@ export const listPosts = query({
 
 export const getPost = query({
   args: {
-    workspaceSlug: v.string(),
     apiKey: v.string(),
     postSlug: v.string(),
   },
   handler: async (ctx, args) => {
-    const access = await validateApiKey(ctx, args.workspaceSlug, args.apiKey);
+    const access = await validateApiKey(ctx, args.apiKey);
     if (!access) {
       return null;
     }
@@ -164,34 +165,155 @@ export const getPost = query({
     const post = await getPublicPostBySlug(ctx, access.workspace._id, args.postSlug.trim());
     if (!post || !isPublicPost(post)) {
       return {
-        workspace: {
-          id: access.workspace._id,
-          name: access.workspace.name,
-          slug: access.workspace.slug,
-        },
+        workspace: toWorkspaceMeta(access.workspace),
         post: null,
       };
     }
 
     return {
-      workspace: {
-        id: access.workspace._id,
-        name: access.workspace.name,
-        slug: access.workspace.slug,
-      },
+      workspace: toWorkspaceMeta(access.workspace),
       post: await getPublicPostDetail(ctx, post),
+    };
+  },
+});
+
+export const listAuthors = query({
+  args: {
+    apiKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const access = await validateApiKey(ctx, args.apiKey);
+    if (!access) {
+      return null;
+    }
+
+    const authors = await ctx.db
+      .query('authors')
+      .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', access.workspace._id))
+      .collect();
+
+    return {
+      workspace: toWorkspaceMeta(access.workspace),
+      authors: authors
+        .map((author) => ({
+          id: author._id,
+          name: author.name,
+          email: author.email,
+          about: author.about ?? '',
+          socialLinks: (author.socialLinks as Record<string, string> | undefined) ?? {},
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  },
+});
+
+export const listCategories = query({
+  args: {
+    apiKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const access = await validateApiKey(ctx, args.apiKey);
+    if (!access) {
+      return null;
+    }
+
+    const categories = await ctx.db
+      .query('categories')
+      .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', access.workspace._id))
+      .collect();
+
+    return {
+      workspace: toWorkspaceMeta(access.workspace),
+      categories: categories
+        .map((category) => ({
+          id: category._id,
+          name: category.name,
+          slug: category.slug,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  },
+});
+
+export const listTags = query({
+  args: {
+    apiKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const access = await validateApiKey(ctx, args.apiKey);
+    if (!access) {
+      return null;
+    }
+
+    const tags = await ctx.db
+      .query('tags')
+      .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', access.workspace._id))
+      .collect();
+
+    return {
+      workspace: toWorkspaceMeta(access.workspace),
+      tags: tags
+        .map((tag) => ({
+          id: tag._id,
+          name: tag.name,
+          slug: tag.slug,
+          createdAt: new Date(tag.createdAt).toISOString(),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  },
+});
+
+export const getStats = query({
+  args: {
+    apiKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const access = await validateApiKey(ctx, args.apiKey);
+    if (!access) {
+      return null;
+    }
+
+    const [posts, authors, categories, tags] = await Promise.all([
+      ctx.db
+        .query('posts')
+        .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', access.workspace._id))
+        .collect(),
+      ctx.db
+        .query('authors')
+        .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', access.workspace._id))
+        .collect(),
+      ctx.db
+        .query('categories')
+        .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', access.workspace._id))
+        .collect(),
+      ctx.db
+        .query('tags')
+        .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', access.workspace._id))
+        .collect(),
+    ]);
+
+    const publicPosts = posts.filter(isPublicPost);
+
+    return {
+      workspace: toWorkspaceMeta(access.workspace),
+      stats: {
+        totalPosts: publicPosts.length,
+        totalAuthors: authors.length,
+        totalCategories: categories.length,
+        totalTags: tags.length,
+      },
     };
   },
 });
 
 export const trackApiKeyUsage = mutation({
   args: {
-    workspaceSlug: v.string(),
     apiKey: v.string(),
     ip: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const access = await validateApiKey(ctx, args.workspaceSlug, args.apiKey);
+    const access = await validateApiKey(ctx, args.apiKey);
     if (!access) {
       return { success: false };
     }

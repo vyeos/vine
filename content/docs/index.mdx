@@ -3,7 +3,7 @@ title: Vine Public Content API
 description: Complete guide to integrating Vine content into your website, landing page, or newsletter
 ---
 
-This handoff guide is meant for people who simply want to pull live Vine content onto a website, landing page, or newsletter. Everything runs against the production host `https://api.vinecms.online`, and every request uses your workspace's public API key.
+This handoff guide is meant for people who simply want to pull live Vine content onto a website, landing page, or newsletter. Everything runs against the production host `https://vinecms.tech`, and every request uses your workspace's public API key.
 
 ## Quick Start
 
@@ -22,7 +22,7 @@ This handoff guide is meant for people who simply want to pull live Vine content
 All API requests are made to:
 
 ```
-https://api.vinecms.online/api/public/v1
+https://vinecms.tech/api/public/v1
 ```
 
 > **Note**: The API is versioned. `v1` is the current stable version. Both `/v1/` and the legacy format (without version) are supported for backward compatibility, but using `/v1/` explicitly is recommended.
@@ -34,6 +34,15 @@ Replace `{API_KEY}` in each URL with the key provided to you (or you can issue o
 ## Headers
 
 None required. The public API is configured for simple GET requests, so you can call it straight from the browser or curl without setting anything special.
+
+## Available Endpoints
+
+- `GET /api/public/v1/{API_KEY}/posts`
+- `GET /api/public/v1/{API_KEY}/posts/{postSlug}`
+- `GET /api/public/v1/{API_KEY}/authors`
+- `GET /api/public/v1/{API_KEY}/categories`
+- `GET /api/public/v1/{API_KEY}/tags`
+- `GET /api/public/v1/{API_KEY}/stats`
 
 ## What's Next?
 

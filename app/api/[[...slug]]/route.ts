@@ -42,28 +42,103 @@ type PublicPostResponse = {
   } | null;
 } | null;
 
+type PublicAuthorsResponse = {
+  workspace: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  authors: Array<{
+    id: string;
+    name: string;
+    email: string;
+    about: string;
+    socialLinks: Record<string, string>;
+  }>;
+} | null;
+
+type PublicCategoriesResponse = {
+  workspace: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  categories: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+} | null;
+
+type PublicTagsResponse = {
+  workspace: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  tags: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    createdAt: string;
+  }>;
+} | null;
+
+type PublicStatsResponse = {
+  workspace: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  stats: {
+    totalPosts: number;
+    totalAuthors: number;
+    totalCategories: number;
+    totalTags: number;
+  };
+} | null;
+
 const listPublicPosts = makeFunctionReference<
   'query',
-  { workspaceSlug: string; apiKey: string },
+  { apiKey: string },
   PublicPostsResponse
 >('publicApi:listPosts');
 
 const getPublicPost = makeFunctionReference<
   'query',
-  { workspaceSlug: string; apiKey: string; postSlug: string },
+  { apiKey: string; postSlug: string },
   PublicPostResponse
 >('publicApi:getPost');
 
+const listPublicAuthors = makeFunctionReference<
+  'query',
+  { apiKey: string },
+  PublicAuthorsResponse
+>('publicApi:listAuthors');
+
+const listPublicCategories = makeFunctionReference<
+  'query',
+  { apiKey: string },
+  PublicCategoriesResponse
+>('publicApi:listCategories');
+
+const listPublicTags = makeFunctionReference<
+  'query',
+  { apiKey: string },
+  PublicTagsResponse
+>('publicApi:listTags');
+
+const getPublicStats = makeFunctionReference<
+  'query',
+  { apiKey: string },
+  PublicStatsResponse
+>('publicApi:getStats');
+
 const trackPublicApiKeyUsage = makeFunctionReference<
   'mutation',
-  { workspaceSlug: string; apiKey: string; ip?: string },
+  { apiKey: string; ip?: string },
   { success: boolean }
 >('publicApi:trackApiKeyUsage');
-
-function getWorkspaceSlug(request: Request) {
-  const { searchParams } = new URL(request.url);
-  return searchParams.get('workspace')?.trim() || searchParams.get('workspaceSlug')?.trim() || null;
-}
 
 function getRequestIp(request: Request) {
   const forwardedFor = request.headers.get('x-forwarded-for');
@@ -85,12 +160,6 @@ const api = new Elysia({ prefix: '/api' })
     message: 'Public API is available.',
   }))
   .get('/public/v1/:apiKey/posts', async ({ params, request, set }) => {
-    const workspaceSlug = getWorkspaceSlug(request);
-    if (!workspaceSlug) {
-      set.status = 400;
-      return { ok: false, error: 'Missing workspace query parameter' };
-    }
-
     const apiKey = params.apiKey?.trim();
     if (!apiKey) {
       set.status = 401;
@@ -98,17 +167,15 @@ const api = new Elysia({ prefix: '/api' })
     }
 
     const result = await fetchQuery(listPublicPosts, {
-      workspaceSlug,
       apiKey,
     });
 
     if (!result) {
       set.status = 401;
-      return { ok: false, error: 'Invalid API key or workspace' };
+      return { ok: false, error: 'Invalid API key' };
     }
 
     await fetchMutation(trackPublicApiKeyUsage, {
-      workspaceSlug,
       apiKey,
       ip: getRequestIp(request),
     });
@@ -120,12 +187,6 @@ const api = new Elysia({ prefix: '/api' })
     };
   })
   .get('/public/v1/:apiKey/posts/:postSlug', async ({ params, request, set }) => {
-    const workspaceSlug = getWorkspaceSlug(request);
-    if (!workspaceSlug) {
-      set.status = 400;
-      return { ok: false, error: 'Missing workspace query parameter' };
-    }
-
     const apiKey = params.apiKey?.trim();
     if (!apiKey) {
       set.status = 401;
@@ -133,14 +194,13 @@ const api = new Elysia({ prefix: '/api' })
     }
 
     const result = await fetchQuery(getPublicPost, {
-      workspaceSlug,
       apiKey,
       postSlug: params.postSlug,
     });
 
     if (!result) {
       set.status = 401;
-      return { ok: false, error: 'Invalid API key or workspace' };
+      return { ok: false, error: 'Invalid API key' };
     }
 
     if (!result.post) {
@@ -149,7 +209,6 @@ const api = new Elysia({ prefix: '/api' })
     }
 
     await fetchMutation(trackPublicApiKeyUsage, {
-      workspaceSlug,
       apiKey,
       ip: getRequestIp(request),
     });
@@ -158,6 +217,102 @@ const api = new Elysia({ prefix: '/api' })
       ok: true,
       workspace: result.workspace,
       post: result.post,
+    };
+  })
+  .get('/public/v1/:apiKey/authors', async ({ params, request, set }) => {
+    const apiKey = params.apiKey?.trim();
+    if (!apiKey) {
+      set.status = 401;
+      return { ok: false, error: 'Missing API key' };
+    }
+
+    const result = await fetchQuery(listPublicAuthors, { apiKey });
+    if (!result) {
+      set.status = 401;
+      return { ok: false, error: 'Invalid API key' };
+    }
+
+    await fetchMutation(trackPublicApiKeyUsage, {
+      apiKey,
+      ip: getRequestIp(request),
+    });
+
+    return {
+      ok: true,
+      workspace: result.workspace,
+      authors: result.authors,
+    };
+  })
+  .get('/public/v1/:apiKey/categories', async ({ params, request, set }) => {
+    const apiKey = params.apiKey?.trim();
+    if (!apiKey) {
+      set.status = 401;
+      return { ok: false, error: 'Missing API key' };
+    }
+
+    const result = await fetchQuery(listPublicCategories, { apiKey });
+    if (!result) {
+      set.status = 401;
+      return { ok: false, error: 'Invalid API key' };
+    }
+
+    await fetchMutation(trackPublicApiKeyUsage, {
+      apiKey,
+      ip: getRequestIp(request),
+    });
+
+    return {
+      ok: true,
+      workspace: result.workspace,
+      categories: result.categories,
+    };
+  })
+  .get('/public/v1/:apiKey/tags', async ({ params, request, set }) => {
+    const apiKey = params.apiKey?.trim();
+    if (!apiKey) {
+      set.status = 401;
+      return { ok: false, error: 'Missing API key' };
+    }
+
+    const result = await fetchQuery(listPublicTags, { apiKey });
+    if (!result) {
+      set.status = 401;
+      return { ok: false, error: 'Invalid API key' };
+    }
+
+    await fetchMutation(trackPublicApiKeyUsage, {
+      apiKey,
+      ip: getRequestIp(request),
+    });
+
+    return {
+      ok: true,
+      workspace: result.workspace,
+      tags: result.tags,
+    };
+  })
+  .get('/public/v1/:apiKey/stats', async ({ params, request, set }) => {
+    const apiKey = params.apiKey?.trim();
+    if (!apiKey) {
+      set.status = 401;
+      return { ok: false, error: 'Missing API key' };
+    }
+
+    const result = await fetchQuery(getPublicStats, { apiKey });
+    if (!result) {
+      set.status = 401;
+      return { ok: false, error: 'Invalid API key' };
+    }
+
+    await fetchMutation(trackPublicApiKeyUsage, {
+      apiKey,
+      ip: getRequestIp(request),
+    });
+
+    return {
+      ok: true,
+      workspace: result.workspace,
+      stats: result.stats,
     };
   });
 

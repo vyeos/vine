@@ -1,109 +1,62 @@
 ---
 title: Workspace Stats
-description: Get statistics about your Vine workspace
+description: Retrieve top-level workspace counts from your Vine workspace
 ---
 
-The Stats API provides aggregate statistics about your workspace. Use this to display counters, dashboard metrics, or workspace overview information.
+The Workspace Stats API returns summary counts for the workspace connected to your API key.
 
-## Endpoint
+## Fetch Workspace Stats
 
+Retrieve summary totals for public posts, authors, categories, and tags.
+
+### Link
+
+```text
+https://vinecms.tech/api/public/v1/{API_KEY}/stats
 ```
-GET https://api.vinecms.online/api/public/v1/{API_KEY}/stats
+
+### Endpoint
+
+```text
+GET /api/public/v1/{API_KEY}/stats
 ```
 
-## Example Request
+### Query Parameters
+
+None right now.
+
+### Example Request
 
 ```bash
-curl "https://api.vinecms.online/api/public/v1/{API_KEY}/stats"
+curl "https://vinecms.tech/api/public/v1/{API_KEY}/stats"
 ```
 
-## Example Response
+### Example Response
 
 ```json
 {
-  "totalPosts": 42,
-  "totalAuthors": 5,
-  "totalCategories": 6,
-  "totalTags": 18
+  "ok": true,
+  "workspace": {
+    "id": "workspace_id",
+    "name": "Vyeos",
+    "slug": "vyeos"
+  },
+  "stats": {
+    "totalPosts": 12,
+    "totalAuthors": 3,
+    "totalCategories": 5,
+    "totalTags": 9
+  }
 }
 ```
 
-## Response Fields
+### Notes
 
-The stats object contains:
+- `totalPosts` currently counts only posts that are both `published` and `visible`
+- the other totals count all authors, categories, and tags in the workspace
 
-- `totalPosts` (number): Total number of published posts
-- `totalAuthors` (number): Total number of authors in the workspace
-- `totalCategories` (number): Total number of categories
-- `totalTags` (number): Total number of tags
+### Use Cases
 
-## Use Cases
-
-- **Dashboard Counters**: Display workspace metrics on a dashboard
-- **Landing Page Stats**: Show impressive numbers on a marketing page
-- **Workspace Overview**: Provide a quick summary of content volume
-- **Analytics**: Track content growth over time
-
-## Example Usage
-
-### Displaying Stats on a Dashboard
-
-```js
-// Fetch stats
-const response = await fetch(
-  'https://api.vinecms.online/api/public/{API_KEY}/stats'
-);
-const stats = await response.json();
-
-// Display metrics
-console.log(`Total Posts: ${stats.totalPosts}`);
-console.log(`Total Authors: ${stats.totalAuthors}`);
-console.log(`Total Categories: ${stats.totalCategories}`);
-console.log(`Total Tags: ${stats.totalTags}`);
-```
-
-### Building a Stats Component
-
-```jsx
-// React example
-function WorkspaceStats() {
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    fetch('https://api.vinecms.online/api/public/{API_KEY}/stats')
-      .then(res => res.json())
-      .then(setStats);
-  }, []);
-
-  if (!stats) return <div>Loading...</div>;
-
-  return (
-    <div className="stats-grid">
-      <div className="stat">
-        <h3>{stats.totalPosts}</h3>
-        <p>Posts Published</p>
-      </div>
-      <div className="stat">
-        <h3>{stats.totalAuthors}</h3>
-        <p>Authors</p>
-      </div>
-      <div className="stat">
-        <h3>{stats.totalCategories}</h3>
-        <p>Categories</p>
-      </div>
-      <div className="stat">
-        <h3>{stats.totalTags}</h3>
-        <p>Tags</p>
-      </div>
-    </div>
-  );
-}
-```
-
-## Related Endpoints
-
-- [Posts](/docs/posts) - Get detailed post information
-- [Authors](/docs/authors) - Get author details
-- [Categories](/docs/categories) - Get category information
-- [Tags](/docs/tags) - Get tag information
-
+- public workspace summary cards
+- marketing site counters
+- external dashboards

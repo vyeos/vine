@@ -115,6 +115,21 @@ Convex deployment env should also include:
 
 Media uploads use Convex storage. Media records store `storageId`, and the app resolves file URLs from Convex storage when rendering the media library or editor image picker.
 
+## Public API
+
+The currently implemented public API is:
+
+- `GET /api/public/v1/{API_KEY}/posts`
+- `GET /api/public/v1/{API_KEY}/posts/{postSlug}`
+- `GET /api/public/v1/{API_KEY}/authors`
+- `GET /api/public/v1/{API_KEY}/categories`
+- `GET /api/public/v1/{API_KEY}/tags`
+- `GET /api/public/v1/{API_KEY}/stats`
+
+The API key is part of the path and identifies the workspace for public reads.
+
+Only posts that are both `published` and `visible` are returned.
+
 ## Notes
 
 - This repository no longer uses the old Express/Vite monorepo structure.
