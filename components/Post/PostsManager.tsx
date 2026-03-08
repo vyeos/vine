@@ -34,6 +34,7 @@ import { DataTable } from './data-table';
 import { ImportMarkdownDialog } from './ImportMarkdownDialog';
 import { createColumns } from './columns';
 import type { Post } from '@/types/post';
+import { getWorkspacePath } from '@/lib/utils';
 
 export default function PostsManager() {
   const workspaceSlug = useWorkspaceSlug();
@@ -47,18 +48,18 @@ export default function PostsManager() {
 
   const handleNewPost = () => {
     if (!workspaceSlug) return;
-    router.push(`/dashboard/${workspaceSlug}/editor`);
+    router.push(getWorkspacePath(workspaceSlug, 'editor'));
   };
 
   const handleImportMarkdown = (raw: string) => {
     if (!workspaceSlug) return;
     sessionStorage.setItem(`vine-markdown-import-${workspaceSlug}`, raw);
-    router.push(`/dashboard/${workspaceSlug}/editor`);
+    router.push(getWorkspacePath(workspaceSlug, 'editor'));
   };
 
   const handleEdit = (postSlug: string) => {
     if (!workspaceSlug) return;
-    router.push(`/dashboard/${workspaceSlug}/editor/${postSlug}`);
+    router.push(getWorkspacePath(workspaceSlug, `editor/${postSlug}`));
   };
 
   const handleDelete = (postSlug: string) => {

@@ -18,7 +18,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useUserWorkspaces } from '@/hooks/useWorkspace';
-import { getLastWorkspaceSlugs, updateLastWorkspaceCookie } from '@/lib/utils';
+import {
+  getLastWorkspaceSlugs,
+  getWorkspacePath,
+  getWorkspacePathSuffix,
+  updateLastWorkspaceCookie,
+} from '@/lib/utils';
 
 function RoleBadge({ role }: { role: string }) {
   return (
@@ -38,13 +43,7 @@ export function WorkspaceSwitcher() {
   const { previous: lastUsedSlug } = getLastWorkspaceSlugs();
 
   const getCurrentRoutePath = () => {
-    if (!workspaceSlug) return '';
-    const basePath = `/dashboard/${workspaceSlug}`;
-    if (pathname.startsWith(basePath)) {
-      const remainingPath = pathname.slice(basePath.length);
-      return remainingPath || '';
-    }
-    return '';
+    return getWorkspacePathSuffix(pathname, workspaceSlug);
   };
 
   const currentWorkspace = useMemo(() => {
@@ -119,8 +118,8 @@ export function WorkspaceSwitcher() {
               {workspaces.map((workspace) => {
                 const currentRoutePath = getCurrentRoutePath();
                 const targetPath = currentRoutePath
-                  ? `/dashboard/${workspace.slug}${currentRoutePath}`
-                  : `/dashboard/${workspace.slug}`;
+                  ? `${getWorkspacePath(workspace.slug)}${currentRoutePath}`
+                  : getWorkspacePath(workspace.slug, 'dashboard');
 
                 return (
                   <DropdownMenuItem
@@ -205,8 +204,8 @@ export function WorkspaceSwitcher() {
               const isActive = workspace.id === currentWorkspace.id;
               const currentRoutePath = getCurrentRoutePath();
               const targetPath = currentRoutePath
-                ? `/dashboard/${workspace.slug}${currentRoutePath}`
-                : `/dashboard/${workspace.slug}`;
+                ? `${getWorkspacePath(workspace.slug)}${currentRoutePath}`
+                : getWorkspacePath(workspace.slug, 'dashboard');
 
               return (
                 <DropdownMenuItem

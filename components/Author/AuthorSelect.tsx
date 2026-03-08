@@ -15,6 +15,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { getWorkspacePath } from '@/lib/utils';
 import { useWorkspaceAuthors } from '@/hooks/useAuthor';
 import type { Author } from '@/types/author';
 import { useRouter } from 'next/navigation';
@@ -143,7 +144,7 @@ export default function AuthorSelect({
                 <CommandItem
                   onSelect={() => {
                     setOpen(false);
-                    router.push(`/dashboard/${workspaceSlug}/authors`);
+                    router.push(getWorkspacePath(workspaceSlug!, 'authors'));
                   }}
                   className='cursor-pointer text-primary'
                 >

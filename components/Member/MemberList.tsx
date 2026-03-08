@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/empty';
 import type { Member, PendingInvitation, MemberRole } from '@/types/member';
 import { ROLE_HIERARCHY } from '@/types/member';
+import { getWorkspacePath } from '@/lib/utils';
 
 type Props = {
   members: Member[];
@@ -107,7 +108,11 @@ export default function MemberList({
             />
           </div>
           {canInvite && (
-            <Button onClick={() => router.push(`/dashboard/${workspaceSlug}/members/invite`)}>
+            <Button
+              onClick={() =>
+                router.push(getWorkspacePath(workspaceSlug, 'members/invite'))
+              }
+            >
               <Plus size={16} className='mr-1' />
               Invite
             </Button>

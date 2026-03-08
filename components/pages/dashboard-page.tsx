@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { PingingDotChart } from '@/components/ui/pinging-dot-chart';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardHeatmap } from '@/hooks/useDashboardHeatmap';
@@ -12,6 +11,7 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useWorkspaceVerification } from '@/hooks/useWorkspace';
 import { useWorkspaceSlug } from '@/hooks/useWorkspaceSlug';
 import type { DashboardRecentPost } from '@/types/dashboard';
+import { getWorkspacePath } from '@/lib/utils';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -95,13 +95,13 @@ export function DashboardPage() {
         tabIndex={0}
         onClick={() => {
           if (workspaceSlug && post.slug) {
-            router.push(`/dashboard/${workspaceSlug}/editor/${post.slug}`);
+            router.push(getWorkspacePath(workspaceSlug, `editor/${post.slug}`));
           }
         }}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && workspaceSlug && post.slug) {
             e.preventDefault();
-            router.push(`/dashboard/${workspaceSlug}/editor/${post.slug}`);
+            router.push(getWorkspacePath(workspaceSlug, `editor/${post.slug}`));
           }
         }}
         className='flex flex-col gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:flex-row sm:items-center sm:justify-between'

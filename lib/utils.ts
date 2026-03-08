@@ -74,3 +74,38 @@ export function updateLastWorkspaceCookie(nextCurrentSlug: string) {
     maxAgeSeconds: SEVEN_DAYS_IN_SECONDS,
   });
 }
+
+export function getWorkspacePath(workspaceSlug: string, subpath = '') {
+  const normalizedSubpath = subpath.replace(/^\/+|\/+$/g, '');
+  return normalizedSubpath
+    ? `/${workspaceSlug}/${normalizedSubpath}`
+    : `/${workspaceSlug}`;
+}
+
+export function getWorkspacePathSuffix(
+  pathname: string,
+  workspaceSlug?: string,
+) {
+  if (!workspaceSlug) return '';
+
+  const basePath = getWorkspacePath(workspaceSlug);
+  if (pathname === basePath) {
+    return '';
+  }
+
+  if (pathname.startsWith(`${basePath}/`)) {
+    return pathname.slice(basePath.length);
+  }
+
+  return '';
+}
+
+export function getLegacyDashboardPath(
+  workspaceSlug: string,
+  subpath = '',
+) {
+  const normalizedSubpath = subpath.replace(/^\/+|\/+$/g, '');
+  return normalizedSubpath
+    ? `/dashboard/${workspaceSlug}/${normalizedSubpath}`
+    : `/dashboard/${workspaceSlug}`;
+}

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useWorkspaceVerification } from '@/hooks/useWorkspace';
 import { EditorLayout } from '@/components/EditorLayout';
+import { getWorkspacePath } from '@/lib/utils';
 
 function StandardDashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -57,7 +58,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const params = useParams<{ workspaceSlug: string }>();
   const workspaceSlug = params.workspaceSlug;
-  const isEditorRoute = pathname.includes(`/dashboard/${workspaceSlug}/editor`);
+  const isEditorRoute = pathname.startsWith(
+    getWorkspacePath(workspaceSlug, 'editor'),
+  );
 
   if (isEditorRoute) {
     return (

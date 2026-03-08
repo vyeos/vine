@@ -8,6 +8,7 @@ import { NavUser } from '@/components/nav-user';
 import { WorkspaceSwitcher } from '@/components/Workspace/workspaceSwitcher';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getWorkspacePath } from '@/lib/utils';
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const navItems = [
-  { title: 'Dashboard', url: '', icon: SquareTerminal, exact: true },
+  { title: 'Dashboard', url: 'dashboard', icon: SquareTerminal, exact: true },
   { title: 'Posts', url: 'posts', icon: FileText },
   { title: 'Authors', url: 'authors', icon: Users },
   { title: 'Categories', url: 'categories', icon: Layers },
@@ -36,19 +37,15 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const navMainItems = navItems.map((item) => ({
     ...item,
     url: workspaceSlug
-      ? item.url
-        ? `/dashboard/${workspaceSlug}/${item.url}`
-        : `/dashboard/${workspaceSlug}`
-      : item.url
-        ? `/dashboard/${item.url}`
-        : '/dashboard',
+      ? getWorkspacePath(workspaceSlug, item.url)
+      : '/workspaces',
   }));
 
   const navDeveloperItems = developerItems.map((item) => ({
     ...item,
     url: workspaceSlug
-      ? `/dashboard/${workspaceSlug}/${item.url}`
-      : `/dashboard/${item.url}`,
+      ? getWorkspacePath(workspaceSlug, item.url)
+      : '/workspaces',
   }));
 
   return (

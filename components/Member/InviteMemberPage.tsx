@@ -28,6 +28,7 @@ import { useWorkspaceSlug } from '@/hooks/useWorkspaceSlug';
 import { useWorkspaceVerification } from '@/hooks/useWorkspace';
 import type { InviteMemberData, MemberRole } from '@/types/member';
 import { ROLE_HIERARCHY } from '@/types/member';
+import { getWorkspacePath } from '@/lib/utils';
 
 export default function InviteMemberPage() {
   const workspaceSlug = useWorkspaceSlug();
@@ -54,7 +55,7 @@ export default function InviteMemberPage() {
 
   useEffect(() => {
     if (workspaceSlug && currentUserRole === 'member') {
-      router.replace(`/dashboard/${workspaceSlug}/members`);
+      router.replace(getWorkspacePath(workspaceSlug, 'members'));
     }
   }, [currentUserRole, router, workspaceSlug]);
 
@@ -66,7 +67,7 @@ export default function InviteMemberPage() {
     inviteMemberMutation.mutate(data, {
       onSuccess: () => {
         reset();
-        router.push(`/dashboard/${workspaceSlug}/members`);
+        router.push(getWorkspacePath(workspaceSlug!, 'members'));
       },
     });
   });
@@ -98,7 +99,11 @@ export default function InviteMemberPage() {
       <Card className='mx-auto max-w-2xl animate-in fade-in-50 zoom-in-95 duration-300'>
         <CardHeader>
           <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' onClick={() => router.push(`/dashboard/${workspaceSlug}/members`)}>
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={() => router.push(getWorkspacePath(workspaceSlug!, 'members'))}
+            >
               <ArrowLeft className='h-4 w-4' />
             </Button>
             <div className='flex items-center gap-3'>
@@ -188,7 +193,7 @@ export default function InviteMemberPage() {
               <Button
                 type='button'
                 variant='outline'
-                onClick={() => router.push(`/dashboard/${workspaceSlug}/members`)}
+                onClick={() => router.push(getWorkspacePath(workspaceSlug!, 'members'))}
                 disabled={inviteMemberMutation.isPending}
               >
                 Cancel

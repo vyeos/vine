@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cn, getWorkspacePath } from '@/lib/utils';
 
 interface TagMultiSelectProps {
   value: string[];
@@ -154,7 +154,7 @@ export default function TagMultiSelect({
                 <CommandItem
                   onSelect={() => {
                     setOpen(false);
-                    router.push(`/dashboard/${workspaceSlug}/tags`);
+                    router.push(getWorkspacePath(workspaceSlug!, 'tags'));
                   }}
                   className='cursor-pointer text-primary'
                 >

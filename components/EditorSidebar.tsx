@@ -54,7 +54,7 @@ import {
   postMetadataSchema,
   type PostMetadataFormData,
 } from '@/lib/validations/post';
-import { cn } from '@/lib/utils';
+import { cn, getWorkspacePath } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -330,7 +330,7 @@ export function EditorSidebar() {
           clearWorkspacePersistence(undefined);
 
           shouldSkipBlockerRef.current = true;
-          router.push(`/dashboard/${workspaceSlug}/posts`);
+          router.push(getWorkspacePath(workspaceSlug, 'posts'));
         },
       });
     } else {
@@ -363,7 +363,7 @@ export function EditorSidebar() {
             status: 'draft',
           }));
 
-          router.push(`/dashboard/${workspaceSlug}/posts`);
+          router.push(getWorkspacePath(workspaceSlug, 'posts'));
         },
       });
     }

@@ -17,7 +17,13 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDeleteWorkspace, useUserWorkspaces } from '@/hooks/useWorkspace';
-import { cn, getLastWorkspaceSlugs, updateLastWorkspaceCookie } from '@/lib/utils';
+import {
+  cn,
+  getLastWorkspaceSlugs,
+  getWorkspacePath,
+  getWorkspacePathSuffix,
+  updateLastWorkspaceCookie,
+} from '@/lib/utils';
 
 export function WorkspaceManagementPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -41,21 +47,15 @@ export function WorkspaceManagementPage() {
   const deleteWorkspace = useDeleteWorkspace();
 
   const getCurrentRoutePath = () => {
-    if (!workspaceSlug) return '';
-    const basePath = `/dashboard/${workspaceSlug}`;
-    if (pathname.startsWith(basePath)) {
-      const remainingPath = pathname.slice(basePath.length);
-      return remainingPath || '';
-    }
-    return '';
+    return getWorkspacePathSuffix(pathname, workspaceSlug);
   };
 
   const handleNavigateToWorkspace = (slug: string) => {
     updateLastWorkspaceCookie(slug);
     const currentRoutePath = getCurrentRoutePath();
     const targetPath = currentRoutePath
-      ? `/dashboard/${slug}${currentRoutePath}`
-      : `/dashboard/${slug}`;
+      ? `${getWorkspacePath(slug)}${currentRoutePath}`
+      : getWorkspacePath(slug, 'dashboard');
     router.push(targetPath);
   };
 

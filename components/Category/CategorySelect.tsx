@@ -15,6 +15,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { getWorkspacePath } from '@/lib/utils';
 import { useUserCategories } from '@/hooks/useCategory';
 import type { Category } from '@/types/category';
 import { useRouter } from 'next/navigation';
@@ -148,7 +149,7 @@ export default function CategorySelect({
                   onSelect={() => {
                     setOpen(false);
                     // FIX: Navigate to workspace-specific category page
-                    router.push(`/dashboard/${workspaceSlug}/categories`);
+                    router.push(getWorkspacePath(workspaceSlug!, 'categories'));
                   }}
                   className='cursor-pointer text-primary'
                 >

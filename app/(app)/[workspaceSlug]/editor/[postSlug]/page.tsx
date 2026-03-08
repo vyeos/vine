@@ -27,6 +27,7 @@ import {
 import { AlertCircle } from 'lucide-react';
 import { useEditorContext } from '@/components/editor/editor-context';
 import type { PostMetadata } from '@/types/editor';
+import { getWorkspacePath } from '@/lib/utils';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -121,14 +122,14 @@ export default function EditPostPage() {
     if (hasUnsavedChanges()) {
       setShowWarningDialog(true);
       setPendingNavigation(() => () => {
-        router.push(`/dashboard/${workspaceSlug}/posts`);
+        router.push(getWorkspacePath(workspaceSlug, 'posts'));
         setShowWarningDialog(false);
         setPendingNavigation(null);
       });
       return;
     }
 
-    router.push(`/dashboard/${workspaceSlug}/posts`);
+    router.push(getWorkspacePath(workspaceSlug, 'posts'));
   }, [hasUnsavedChanges, router, workspaceSlug]);
 
   if (isLoadingPost) {

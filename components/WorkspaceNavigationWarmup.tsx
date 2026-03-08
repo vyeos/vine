@@ -10,6 +10,7 @@ import { useWorkspaceAuthors } from '@/hooks/useAuthor';
 import { useUserCategories } from '@/hooks/useCategory';
 import { useWorkspaceTags } from '@/hooks/useTag';
 import { useWorkspaceApiKeys } from '@/hooks/useApiKeys';
+import { getWorkspacePath } from '@/lib/utils';
 
 export function WorkspaceNavigationWarmup({
   workspaceSlug,
@@ -31,15 +32,15 @@ export function WorkspaceNavigationWarmup({
   useEffect(() => {
     if (!activeWorkspaceSlug) return;
 
-    const basePath = `/dashboard/${activeWorkspaceSlug}`;
+    const basePath = getWorkspacePath(activeWorkspaceSlug, 'dashboard');
     const commonRoutes = [
       basePath,
-      `${basePath}/posts`,
-      `${basePath}/authors`,
-      `${basePath}/categories`,
-      `${basePath}/tags`,
-      `${basePath}/keys`,
-      `${basePath}/editor`,
+      getWorkspacePath(activeWorkspaceSlug, 'editor'),
+      getWorkspacePath(activeWorkspaceSlug, 'posts'),
+      getWorkspacePath(activeWorkspaceSlug, 'authors'),
+      getWorkspacePath(activeWorkspaceSlug, 'categories'),
+      getWorkspacePath(activeWorkspaceSlug, 'tags'),
+      getWorkspacePath(activeWorkspaceSlug, 'keys'),
     ];
 
     commonRoutes.forEach((route) => {
