@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/app-sidebar';
+import { WorkspaceNavigationWarmup } from '@/components/WorkspaceNavigationWarmup';
 import { Spinner } from '@/components/ui/spinner';
 import {
   SidebarInset,
@@ -59,8 +60,18 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const isEditorRoute = pathname.includes(`/dashboard/${workspaceSlug}/editor`);
 
   if (isEditorRoute) {
-    return <EditorLayout>{children}</EditorLayout>;
+    return (
+      <>
+        <WorkspaceNavigationWarmup workspaceSlug={workspaceSlug} />
+        <EditorLayout>{children}</EditorLayout>
+      </>
+    );
   }
 
-  return <StandardDashboardLayout>{children}</StandardDashboardLayout>;
+  return (
+    <>
+      <WorkspaceNavigationWarmup workspaceSlug={workspaceSlug} />
+      <StandardDashboardLayout>{children}</StandardDashboardLayout>
+    </>
+  );
 }
