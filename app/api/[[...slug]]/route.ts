@@ -60,15 +60,6 @@ const trackPublicApiKeyUsage = makeFunctionReference<
   { success: boolean }
 >('publicApi:trackApiKeyUsage');
 
-function getApiKey(request: Request) {
-  const bearer = request.headers.get('authorization');
-  if (bearer?.toLowerCase().startsWith('bearer ')) {
-    return bearer.slice(7).trim();
-  }
-
-  return request.headers.get('x-api-key')?.trim() ?? null;
-}
-
 function getWorkspaceSlug(request: Request) {
   const { searchParams } = new URL(request.url);
   return searchParams.get('workspace')?.trim() || searchParams.get('workspaceSlug')?.trim() || null;
@@ -93,14 +84,14 @@ const api = new Elysia({ prefix: '/api' })
     ok: true,
     message: 'Public API is available.',
   }))
-  .get('/public/v1/posts', async ({ request, set }) => {
+  .get('/public/v1/:apiKey/posts', async ({ params, request, set }) => {
     const workspaceSlug = getWorkspaceSlug(request);
     if (!workspaceSlug) {
       set.status = 400;
       return { ok: false, error: 'Missing workspace query parameter' };
     }
 
-    const apiKey = getApiKey(request);
+    const apiKey = params.apiKey?.trim();
     if (!apiKey) {
       set.status = 401;
       return { ok: false, error: 'Missing API key' };
@@ -128,14 +119,14 @@ const api = new Elysia({ prefix: '/api' })
       posts: result.posts,
     };
   })
-  .get('/public/v1/posts/:postSlug', async ({ params, request, set }) => {
+  .get('/public/v1/:apiKey/posts/:postSlug', async ({ params, request, set }) => {
     const workspaceSlug = getWorkspaceSlug(request);
     if (!workspaceSlug) {
       set.status = 400;
       return { ok: false, error: 'Missing workspace query parameter' };
     }
 
-    const apiKey = getApiKey(request);
+    const apiKey = params.apiKey?.trim();
     if (!apiKey) {
       set.status = 401;
       return { ok: false, error: 'Missing API key' };
