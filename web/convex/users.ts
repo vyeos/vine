@@ -1,6 +1,7 @@
 import { getAuthUserId } from '@convex-dev/auth/server';
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import { requireUserId } from './lib/workspace';
 
 export const viewer = query({
   args: {},
@@ -31,11 +32,7 @@ export const updateDisplayName = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-
-    if (!userId) {
-      throw new Error('Authentication required');
-    }
+    const userId = await requireUserId(ctx);
 
     const trimmedName = args.name.trim();
 

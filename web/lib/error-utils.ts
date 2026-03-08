@@ -52,6 +52,13 @@ export function getErrorMessage(
 ): string {
   if (!error) return fallback;
 
+  if (error instanceof Error && error.message) {
+    const apiError = error as ApiError;
+    if (!apiError.response?.data) {
+      return error.message;
+    }
+  }
+
   const apiError = error as ApiError;
   const responseData = apiError.response?.data;
 
