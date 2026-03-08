@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX "uq_workspace_api_keys_hashed_key" ON "workspace_api_keys" USING btree ("hashed_key");

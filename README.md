@@ -1,125 +1,83 @@
-# Hive
+# Vine
 
-Full-stack headless content collaboration platform composed of an Express/Drizzle API (`backend/`) and a Vite/React client (`frontend/`). The codebase is organized as a lightweight monorepo where each package can be developed independently while sharing a common architecture and conventions. A new Next.js + Convex migration target now lives in `web/`.
+Primary app for the project, built with Next.js, Convex, and Elysia.
 
-## Architecture at a Glance
-
-- **Backend** (`backend/`): Express 5 server with modular controllers for authentication, workspace membership, posts, authors, categories, tags, and invitations. Uses Drizzle ORM for schema migrations, Pino for structured logging, Resend for transactional email templates, and Zod-powered DTO validation.
-- **Frontend** (`frontend/`): Vite + React 19 SPA styled with Tailwind, Radix UI, and motion libraries. State and server cache are driven by TanStack Query; forms rely on React Hook Form + Zod. Rich text editing is provided by TipTap.
-- **Web Migration Target** (`web/`): Next.js App Router package that starts the migration to Convex-backed product data, Google-only auth, and Elysia-mounted HTTP routes while leaving the legacy apps intact.
-- **Database**: PostgreSQL. The repo includes Docker instructions and Drizzle migrations (`backend/drizzle/`) for reproducible schema management.
-- **Email + Notifications**: Reusable templates under `backend/src/templates` for password resets, verification, and workspace invitations sent through Resend.
-
-## Prerequisites
-
-- Node.js 20+ (backend uses ts-node/nodemon, frontend targets Vite 7)
-- npm 10+ (lockfiles assume npm; switch to pnpm/yarn only if you regenerate locks)
-- Docker Desktop or a local PostgreSQL 15+ instance
-- Resend API key for transactional emails
+## Stack
+- Next.js App Router for the frontend and product routes
+- Convex for auth, database, file storage, and server functions
+- Elysia mounted behind Next route handlers for HTTP-specific APIs
+- Bun for package management and scripts
 
 ## Repository Layout
 
 ```
 .
-├── backend/   # Express API, Drizzle migrations, email templates
-├── frontend/  # Vite + React client
-├── web/       # Next.js + Convex migration target
+├── web/       # Main application
 ├── LICENSE
-└── README.md  # You are here
+├── README.md
+└── plan.md
 ```
 
 ## Quick Start
 
-1. **Clone and install**
+1. Install dependencies
    ```bash
-   git clone https://github.com/ni3rav/hive hive && cd hive
-   cd backend && npm install
-   cd ../frontend && npm install
+   cd /Users/vyeos/personal/vine/web
+   bun install
    ```
-2. **Provision PostgreSQL (Docker example)**
+2. Configure environment in `web/.env.local`
+3. Start Convex
    ```bash
-   docker run --name hive-postgres -e POSTGRES_PASSWORD=password -d -p 5432:5432 postgres:16
+   cd /Users/vyeos/personal/vine/web
+   bunx convex dev
    ```
-3. **Configure environment**
-   - Backend `.env` (see table below) inside `backend/`
-   - Frontend `.env` inside `frontend/`
-4. **Apply database schema**
+4. Start Next.js
    ```bash
-   cd backend
-   npm run drizzle-push
+   cd /Users/vyeos/personal/vine/web
+   bun dev
    ```
-5. **Run services**
-   - Backend: `npm run dev` (default on port 3000)
-   - Frontend: `npm run dev` (default on port 5173) with `VITE_HIVE_API_BASE_URL` pointing to the backend URL
-   - Web migration target: `cd web && npm install && npx convex dev && npm run dev`
 
-## Environment Variables
+Or use the root scripts:
 
-### Backend (`backend/.env`)
-
-| Variable         | Required | Description                                                           |
-| ---------------- | -------- | --------------------------------------------------------------------- |
-| `DATABASE_URL`   | ✅       | Full Postgres connection string                                       |
-| `PORT`           | ✅       | API port (e.g., `3000`)                                               |
-| `NODE_ENV`       | ✅       | `development` / `production`                                          |
-| `FRONTEND_URL`   | ✅       | Allowed origin for CORS + auth links                                  |
-| `RESEND_API_KEY` | ✅       | API key for Resend transactional emails                               |
-| `DMA`            | optional | Enable DMA-specific safeguards (defaults to `false`)                  |
-| `DEV_USER_ID`    | optional | Seeded ID used for local fixtures                                     |
-| `EMAIL_DOMAIN`   | optional | Domain used for transactional senders (`emails.ni3rav.me` by default) |
-
-Example:
-
-```
-DATABASE_URL=postgres://postgres:password@localhost:5432/postgres
-PORT=3000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-RESEND_API_KEY=re_123
-DMA=false
-DEV_USER_ID=
-EMAIL_DOMAIN=emails.ni3rav.me
+```bash
+cd /Users/vyeos/personal/vine
+bun run convex:dev
+bun run dev
 ```
 
-### Frontend (`frontend/.env`)
+## Required Environment
 
-| Variable                 | Required | Description                                                  |
-| ------------------------ | -------- | ------------------------------------------------------------ |
-| `VITE_HIVE_API_BASE_URL` | ✅       | Base URL for the backend API (e.g., `http://localhost:3000`) |
-| `VITE_APP_URL`           | ✅       | Public URL the SPA runs on (used in deep links)              |
+Set the application variables in `web/.env.local`.
 
-Example:
+Typical local values:
 
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-deployment.convex.site
+AUTH_GOOGLE_ID=your-google-oauth-client-id
+AUTH_GOOGLE_SECRET=your-google-oauth-client-secret
 ```
-VITE_HIVE_API_BASE_URL=http://localhost:3000
-VITE_APP_URL=http://localhost:5173
-```
 
-## Helpful Scripts
+Set the required Convex deployment variables as well:
+- `SITE_URL=http://localhost:3000` for local dev
+- `JWT_PRIVATE_KEY`
+- `JWKS`
 
-| Location | Script                           | Purpose                                       |
-| -------- | -------------------------------- | --------------------------------------------- |
-| backend  | `npm run dev`                    | Start Express API with ts-node + nodemon      |
-| backend  | `npm run build && npm run start` | Compile TypeScript and launch compiled server |
-| backend  | `npm run drizzle-push`           | Apply latest Drizzle schema                   |
-| backend  | `npm run drizzle-studio`         | Open Drizzle Studio for DB inspection         |
-| frontend | `npm run dev`                    | Start Vite dev server                         |
-| frontend | `npm run build`                  | Build production assets                       |
-| frontend | `npm run preview`                | Preview production build locally              |
+## Root Scripts
 
-## Testing & Quality
+- `bun run dev`
+- `bun run build`
+- `bun run start`
+- `bun run lint`
+- `bun run convex:dev`
+- `bun run convex:deploy`
 
-- **Linting**: `npm run lint` in both packages (ESLint 9)
-- **Formatting**: `npm run prettier`
-- **Type safety**: TypeScript strict configs enforced during build
-- There are currently no automated integration tests; rely on manual verification of core flows (auth, workspace management, post publishing) after schema or API changes.
+## Notes
 
-## Additional Docs
-
-- `backend/README.md`: API service setup, database scripts, Docker helpers
-- `frontend/README.md`: SPA development workflow and environment configuration
-- `web/README.md`: Next.js + Convex migration bootstrap
-- `backend/API_ROADMAP.md`: Open roadmap for future endpoints
+- The old React/Node/Postgres code has been removed.
+- The active application lives under `web/`.
+- Docs are now served from the main Next app at `/docs`.
 
 ## License
 
