@@ -1155,7 +1155,7 @@ export function Toolbar({ editor }: ToolbarProps) {
   }, [editor]);
 
   return (
-    <div className='border-b border-foreground/5 bg-background sticky top-0 z-10'>
+    <div className='border-b border-border bg-background sticky top-0 z-10'>
       <div className='flex items-center gap-1 p-2 flex-wrap'>
         <HistoryControls editor={editor} />
         <Divider />

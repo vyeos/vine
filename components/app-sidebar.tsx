@@ -14,7 +14,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from '@/components/ui/sidebar';
 
 const navItems = [
@@ -64,7 +63,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <NavUser user={user} />
         ) : null}
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }

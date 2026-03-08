@@ -32,7 +32,7 @@ const FAQ = () => {
   return (
     <div id="faq" className="flex items-center justify-center px-6 py-12 md:py-16 lg:py-24">
       <div className="w-full max-w-5xl flex flex-col md:flex-row items-start gap-x-12 gap-y-6">
-        <h2 className="text-4xl lg:text-5xl leading-[1.15]! font-semibold tracking-[-0.035em]">
+        <h2 className="text-4xl lg:text-5xl leading-tight font-semibold tracking-tight">
           Frequently Asked <br /> Questions
         </h2>
 
@@ -45,7 +45,7 @@ const FAQ = () => {
             <AccordionItem
               key={question}
               value={`question-${index}`}
-              className="border-foreground/10"
+              className="border-border"
             >
               <AccordionTrigger className="text-left text-lg">
                 {question}

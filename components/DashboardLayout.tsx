@@ -2,10 +2,12 @@
 
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
+import Image from 'next/image';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/app-sidebar';
 import { WorkspaceNavigationWarmup } from '@/components/WorkspaceNavigationWarmup';
 import { Spinner } from '@/components/ui/spinner';
+import { Separator } from '@/components/ui/separator';
 import {
   SidebarInset,
   SidebarProvider,
@@ -15,11 +17,31 @@ import { useWorkspaceVerification } from '@/hooks/useWorkspace';
 import { EditorLayout } from '@/components/EditorLayout';
 import { getWorkspacePath } from '@/lib/utils';
 
+const pageTitles: Record<string, string> = {
+  dashboard: 'Dashboard',
+  posts: 'Posts',
+  authors: 'Authors',
+  categories: 'Categories',
+  tags: 'Tags',
+  media: 'Media',
+  members: 'Members',
+  keys: 'API Keys',
+};
+
+function getPageTitle(pathname: string, workspaceSlug: string): string {
+  const prefix = `/${workspaceSlug}/`;
+  if (!pathname.startsWith(prefix)) return '';
+  const segment = pathname.slice(prefix.length).split('/')[0];
+  return pageTitles[segment] ?? '';
+}
+
 function StandardDashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const params = useParams<{ workspaceSlug: string }>();
+  const pathname = usePathname();
   const workspaceSlug = params.workspaceSlug;
   const { data: workspace, isLoading } = useWorkspaceVerification(workspaceSlug);
+  const pageTitle = getPageTitle(pathname, workspaceSlug);
 
   useEffect(() => {
     if (!isLoading && !workspace) {
@@ -29,9 +51,17 @@ function StandardDashboardLayout({ children }: { children: ReactNode }) {
 
   if (isLoading || !workspace) {
     return (
-      <div className='flex h-screen w-screen items-center justify-center'>
+      <div className='flex h-screen w-screen flex-col items-center justify-center gap-4'>
+        <Image
+          src='/vine.png'
+          alt='Vine'
+          width={40}
+          height={40}
+          className='animate-pulse object-contain'
+        />
         <div className='flex items-center gap-2 text-muted-foreground'>
-          <Spinner className='size-5' />
+          <Spinner className='size-4' />
+          <span className='text-sm'>Loading workspace...</span>
         </div>
       </div>
     );
@@ -44,6 +74,12 @@ function StandardDashboardLayout({ children }: { children: ReactNode }) {
         <header className='flex h-16 shrink-0 items-center gap-2'>
           <div className='flex items-center gap-2 px-4'>
             <SidebarTrigger />
+            {pageTitle && (
+              <>
+                <Separator orientation='vertical' className='h-5' />
+                <span className='text-sm font-medium text-foreground'>{pageTitle}</span>
+              </>
+            )}
           </div>
         </header>
         <main className='flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 pt-0'>

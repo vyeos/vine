@@ -43,7 +43,7 @@ export function PingingDotChart({
     } satisfies ChartConfig);
 
   return (
-    <Card className='h-full shadow-none border-border/50 bg-transparent'>
+    <Card className='h-full shadow-none border-border bg-transparent'>
       <CardHeader>
         <CardTitle>
           {title}

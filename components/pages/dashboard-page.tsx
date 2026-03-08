@@ -24,7 +24,7 @@ function StatsSkeleton() {
   return (
     <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-4'>
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className='space-y-4 rounded-md border border-border/40 bg-muted/10 p-6'>
+        <div key={index} className='space-y-4 rounded-3xl border border-border bg-muted/10 p-6'>
           <Skeleton className='h-10 w-24' />
           <Skeleton className='h-4 w-32' />
           <Skeleton className='h-4 w-20' />
@@ -36,7 +36,7 @@ function StatsSkeleton() {
 
 function HeatmapSkeleton() {
   return (
-    <div className='space-y-4 rounded-md border border-dashed border-border/40 bg-background/80 px-8 py-16 shadow-sm'>
+    <div className='space-y-4 rounded-xl border border-border bg-transparent px-8 py-16'>
       <Skeleton className='mx-auto h-6 w-48' />
       <div className='flex flex-wrap justify-center gap-2'>
         {Array.from({ length: 12 }).map((_, index) => (
@@ -60,7 +60,7 @@ function RecentPostsSkeleton() {
                 <Skeleton className='h-4 w-full' />
               </div>
             </div>
-            {index < 2 && <Separator className='bg-accent/50 text-border/60' />}
+            {index < 2 && <Separator className='bg-border' />}
           </div>
         ))}
       </div>
@@ -122,7 +122,7 @@ export function DashboardPage() {
           )}
         </div>
       </div>
-      {index < total - 1 && <Separator className='bg-accent/50 text-border/60' />}
+      {index < total - 1 && <Separator className='bg-border' />}
     </div>
   );
 
@@ -157,7 +157,7 @@ export function DashboardPage() {
               {stats.map((item, index) => (
                 <div
                   key={item.label}
-                  className='animate-in fade-in-50 zoom-in-95 rounded-3xl border border-foreground/10 bg-muted/20 p-6 duration-300'
+                  className='animate-in fade-in-50 zoom-in-95 rounded-3xl border border-border bg-muted/20 p-6 duration-300'
                   style={{ animationDelay: `${Math.min(index, 3) * 100}ms` }}
                 >
                   <div className='text-4xl font-semibold leading-tight'>{item.value}</div>
@@ -177,7 +177,7 @@ export function DashboardPage() {
           {heatmapLoading ? (
             <HeatmapSkeleton />
           ) : (
-            <div className='animate-in fade-in-50 zoom-in-95 rounded-md border border-foreground/10 bg-background/80 p-1 shadow-sm duration-300'>
+            <div className='animate-in fade-in-50 zoom-in-95 duration-300'>
               <PingingDotChart
                 data={heatmap}
                 title={`Activity in ${workspaceName}`}
@@ -192,13 +192,13 @@ export function DashboardPage() {
           {isLoading ? (
             <RecentPostsSkeleton />
           ) : recentPosts.length === 0 ? (
-            <div className='animate-in fade-in-50 zoom-in-95 rounded-md border border-foreground/10 bg-card/30 p-1 duration-300'>
+            <div className='animate-in fade-in-50 zoom-in-95 rounded-md border border-border bg-card/30 p-1 duration-300'>
               <div className='px-5 py-6 text-center text-sm text-muted-foreground'>
                 No recent posts found.
               </div>
             </div>
           ) : (
-            <div className='animate-in fade-in-50 zoom-in-95 rounded-md border border-foreground/10 bg-card/30 p-1 duration-300'>
+            <div className='animate-in fade-in-50 zoom-in-95 rounded-md border border-border bg-card/30 p-1 duration-300'>
               <div className='flex flex-col'>
                 {recentPosts.map((post, index) => renderRecentPost(post, index, recentPosts.length))}
               </div>

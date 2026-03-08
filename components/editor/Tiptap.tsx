@@ -319,7 +319,7 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
               </div>
             </div>
           )}
-          <ScrollArea className='h-full [&_[data-slot=scroll-area-thumb]]:bg-foreground/20 [&_[data-slot=scroll-area-scrollbar]]:border-l-0'>
+          <ScrollArea className='h-full [&_[data-slot=scroll-area-thumb]]:bg-foreground/15 [&_[data-slot=scroll-area-scrollbar]]:border-l-0'>
             <div
               className='p-4 min-h-[max(14rem,100%)] max-w-full overflow-x-hidden cursor-text'
               onClick={() => editor.commands.focus()}

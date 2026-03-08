@@ -1,13 +1,20 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { LogOut, User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useLogout } from '@/hooks/useAuth';
 
 export function NavUser({
   user,
@@ -19,6 +26,7 @@ export function NavUser({
   };
 }) {
   const router = useRouter();
+  const logoutMutation = useLogout();
 
   const initials = user.name
     .split(' ')
@@ -29,34 +37,50 @@ export function NavUser({
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem className='hidden group-data-[state=collapsed]:block'>
-        <div className='flex justify-center'>
-          <ThemeToggle />
-        </div>
-      </SidebarMenuItem>
-
       <SidebarMenuItem>
-        <div className='flex w-full items-center gap-2 group-data-[state=expanded]:gap-2'>
-          <SidebarMenuButton
-            size='lg'
-            className='flex-1 justify-center group-data-[state=expanded]:justify-start'
-            onClick={() => router.push('/profile')}
-            aria-label='Open profile'
-            title='Open profile'
-          >
-            <Avatar className='h-8 w-8 rounded-lg'>
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className='rounded-lg bg-primary text-primary-foreground'>
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className='grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden'>
-              <span className='truncate font-medium'>{user.name}</span>
-              <span className='truncate text-xs'>{user.email}</span>
-            </div>
-          </SidebarMenuButton>
-          <div className='hidden group-data-[state=expanded]:block'>
-            <ThemeToggle />
+        <div className='flex w-full items-stretch gap-2'>
+          <Popover>
+            <PopoverTrigger asChild>
+              <SidebarMenuButton
+                size='lg'
+                className='flex-1 justify-center group-data-[state=expanded]:justify-start'
+                aria-label='User menu'
+                title='User menu'
+              >
+                <Avatar className='h-8 w-8 rounded-lg'>
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className='rounded-lg bg-primary text-primary-foreground'>
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className='grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden'>
+                  <span className='truncate font-medium'>{user.name}</span>
+                  <span className='truncate text-xs text-muted-foreground'>{user.email}</span>
+                </div>
+              </SidebarMenuButton>
+            </PopoverTrigger>
+
+            <PopoverContent side='top' align='start' className='w-48 p-1'>
+              <button
+                onClick={() => router.push('/profile')}
+                className='flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent'
+              >
+                <User className='size-4 text-muted-foreground' />
+                Profile
+              </button>
+              <button
+                onClick={() => logoutMutation.mutate(undefined, { onSuccess: () => router.push('/sign-in') })}
+                disabled={logoutMutation.isPending}
+                className='flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50'
+              >
+                <LogOut className='size-4' />
+                {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}
+              </button>
+            </PopoverContent>
+          </Popover>
+
+          <div className='hidden group-data-[state=expanded]:flex'>
+            <ThemeToggle className='h-12 w-12 rounded-md' />
           </div>
         </div>
       </SidebarMenuItem>

@@ -4,11 +4,10 @@ import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 export function ThemeToggle({ className }: { className?: string }) {
@@ -24,8 +23,8 @@ export function ThemeToggle({ className }: { className?: string }) {
     );
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <Button
           variant='ghost'
           size='icon'
@@ -35,30 +34,38 @@ export function ThemeToggle({ className }: { className?: string }) {
           {icon}
           <span className='sr-only'>Toggle theme</span>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align='end' className='min-w-[120px] p-1'>
-        <DropdownMenuItem
-          onClick={() => setTheme('light')}
-          className='cursor-pointer gap-2 px-2 py-1.5'
-        >
-          <Sun className='h-4 w-4' />
-          <span>Light</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme('dark')}
-          className='cursor-pointer gap-2 px-2 py-1.5'
-        >
-          <Moon className='h-4 w-4' />
-          <span>Dark</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme('system')}
-          className='cursor-pointer gap-2 px-2 py-1.5'
-        >
-          <Monitor className='h-4 w-4' />
-          <span>System</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent align='end' side='top' className='w-auto p-1'>
+        <div className='flex items-center gap-0.5'>
+          <Button
+            variant={theme === 'light' ? 'secondary' : 'ghost'}
+            size='icon'
+            className='h-8 w-8'
+            onClick={() => setTheme('light')}
+            aria-label='Light theme'
+          >
+            <Sun className='h-4 w-4' />
+          </Button>
+          <Button
+            variant={theme === 'dark' ? 'secondary' : 'ghost'}
+            size='icon'
+            className='h-8 w-8'
+            onClick={() => setTheme('dark')}
+            aria-label='Dark theme'
+          >
+            <Moon className='h-4 w-4' />
+          </Button>
+          <Button
+            variant={theme === 'system' ? 'secondary' : 'ghost'}
+            size='icon'
+            className='h-8 w-8'
+            onClick={() => setTheme('system')}
+            aria-label='System theme'
+          >
+            <Monitor className='h-4 w-4' />
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

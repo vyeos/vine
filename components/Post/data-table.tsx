@@ -189,7 +189,7 @@ export function DataTable<TData, TValue>({
                           handleRowClick(row);
                         }
                       }}
-                      className='cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
+                      className='cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
@@ -214,8 +214,8 @@ export function DataTable<TData, TValue>({
               </TableBody>
             </Table>
           </div>
-          <ScrollBar orientation='horizontal' className='[&_[data-slot=scroll-area-thumb]]:bg-foreground/20' />
-          <ScrollBar orientation='vertical' className='[&_[data-slot=scroll-area-thumb]]:bg-foreground/20' />
+          <ScrollBar orientation='horizontal' className='[&_[data-slot=scroll-area-thumb]]:bg-foreground/15' />
+          <ScrollBar orientation='vertical' className='[&_[data-slot=scroll-area-thumb]]:bg-foreground/15' />
         </ScrollArea>
       </div>
       <div className='flex items-center justify-end space-x-2 py-4'>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Sidebar,
@@ -14,7 +15,7 @@ import { ErrorFallback } from '@/components/ErrorFallback';
 import { useWorkspaceVerification } from '@/hooks/useWorkspace';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { PostMetadata } from '@/types/editor';
 import { loadMetadata, saveMetadata } from '@/components/editor/persistence';
 import type { TiptapHandle } from '@/components/editor/Tiptap';
@@ -163,9 +164,17 @@ export function EditorLayout({ children }: { children: React.ReactNode }) {
 
   if (isLoading || !workspaceSlug || !workspace) {
     return (
-      <div className='flex h-screen w-screen items-center justify-center'>
+      <div className='flex h-screen w-screen flex-col items-center justify-center gap-4'>
+        <Image
+          src='/vine.png'
+          alt='Vine'
+          width={40}
+          height={40}
+          className='animate-pulse object-contain'
+        />
         <div className='flex items-center gap-2 text-muted-foreground'>
-          <Spinner className='size-5' />
+          <Spinner className='size-4' />
+          <span className='text-sm'>Loading editor...</span>
         </div>
       </div>
     );
@@ -199,10 +208,10 @@ export function EditorLayout({ children }: { children: React.ReactNode }) {
         style={{ '--sidebar-width': '32rem' } as React.CSSProperties}
       >
         <SidebarInset className='flex h-screen flex-col overflow-hidden'>
-          <header className='flex h-12 shrink-0 items-center gap-2'>
+          <header className='flex h-16 shrink-0 items-center gap-2'>
             <div className='flex w-full items-center justify-between px-4'>
               <Button variant='ghost' size='icon' onClick={handleGoBack} className='mr-2'>
-                <X className='size-4' />
+                <ArrowLeft className='size-4' />
                 <span className='sr-only'>Back</span>
               </Button>
               <SidebarTrigger />

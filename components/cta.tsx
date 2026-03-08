@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CtaProps {
@@ -18,28 +19,26 @@ interface CtaProps {
 const Cta = ({ heading, description, buttons }: CtaProps) => {
   return (
     <section className="py-12 md:py-16 lg:py-24 px-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-muted/50 border border-foreground/10 flex w-full flex-col gap-16 overflow-hidden rounded-lg p-8 md:rounded-xl lg:flex-row lg:items-center lg:p-12">
-          <div className="flex-1">
-            <h3 className="mb-3 text-2xl font-semibold md:mb-4 md:text-4xl lg:mb-6">
-              {heading}
-            </h3>
-            <p className="text-muted-foreground max-w-xl lg:text-lg">
-              {description}
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            {buttons?.secondary && (
-              <Button variant="outline" asChild>
-                <a href={buttons.secondary.url}>{buttons.secondary.text}</a>
-              </Button>
-            )}
-            {buttons?.primary && (
-              <Button asChild variant="default" size="lg">
-                <a href={buttons.primary.url}>{buttons.primary.text}</a>
-              </Button>
-            )}
-          </div>
+      <div className="mx-auto max-w-2xl text-center">
+        <h3 className="text-3xl font-semibold tracking-tight md:text-4xl">
+          {heading}
+        </h3>
+        <p className="mt-4 text-muted-foreground md:text-lg">
+          {description}
+        </p>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          {buttons?.secondary && (
+            <Button variant="outline" size="lg" asChild>
+              <a href={buttons.secondary.url}>{buttons.secondary.text}</a>
+            </Button>
+          )}
+          {buttons?.primary && (
+            <Button size="lg" asChild>
+              <a href={buttons.primary.url}>
+                {buttons.primary.text} <ArrowUpRight className="h-5! w-5!" />
+              </a>
+            </Button>
+          )}
         </div>
       </div>
     </section>

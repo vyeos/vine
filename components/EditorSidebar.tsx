@@ -522,7 +522,7 @@ export function EditorSidebar() {
       </SidebarHeader>
       <SidebarContent className='flex flex-1 flex-col min-h-0 overflow-hidden'>
         <TabsContent value='metadata' className='flex-1 min-h-0'>
-          <ScrollArea className='h-full pr-2 [&_[data-slot=scroll-area-thumb]]:bg-foreground/10'>
+          <ScrollArea className='h-full pr-2 [&_[data-slot=scroll-area-thumb]]:bg-foreground/15'>
             <div className='flex flex-col gap-4 px-6 py-4 text-sm'>
               {/* Title & description */}
               <div className='space-y-1'>
@@ -651,7 +651,7 @@ export function EditorSidebar() {
               {/* Category & Tags — side by side */}
               <div className='grid grid-cols-2 gap-3'>
                 <div className='space-y-1'>
-                  <label className='mb-2 flex items-center gap-1 text-base font-medium text-muted-foreground'>
+                  <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
                     <span>Category</span>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -679,7 +679,7 @@ export function EditorSidebar() {
                   />
                 </div>
                 <div className='space-y-1'>
-                  <label className='mb-2 flex items-center gap-1 text-base font-medium text-muted-foreground'>
+                  <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
                     <span>Tags</span>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -835,7 +835,7 @@ export function EditorSidebar() {
           </ScrollArea>
         </TabsContent>
         <TabsContent value='analysis' className='flex-1 min-h-0'>
-          <ScrollArea className='h-full pr-2 [&_[data-slot=scroll-area-thumb]]:bg-foreground/10'>
+          <ScrollArea className='h-full pr-2 [&_[data-slot=scroll-area-thumb]]:bg-foreground/15'>
             <div className='px-6 py-4 space-y-6'>
               <div>
                 <h3 className='text-base font-semibold text-foreground mb-4'>
