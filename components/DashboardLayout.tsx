@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -11,8 +11,9 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { useWorkspaceVerification } from '@/hooks/useWorkspace';
+import { EditorLayout } from '@/components/EditorLayout';
 
-export function DashboardLayout({ children }: { children: ReactNode }) {
+function StandardDashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const params = useParams<{ workspaceSlug: string }>();
   const workspaceSlug = params.workspaceSlug;
@@ -49,4 +50,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       </SidebarInset>
     </SidebarProvider>
   );
+}
+
+export function DashboardLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const params = useParams<{ workspaceSlug: string }>();
+  const workspaceSlug = params.workspaceSlug;
+  const isEditorRoute = pathname.includes(`/dashboard/${workspaceSlug}/editor`);
+
+  if (isEditorRoute) {
+    return <EditorLayout>{children}</EditorLayout>;
+  }
+
+  return <StandardDashboardLayout>{children}</StandardDashboardLayout>;
 }

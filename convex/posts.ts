@@ -158,7 +158,7 @@ export const get = query({
     const post = await getWorkspacePostBySlug(ctx, workspace._id, args.postSlug);
 
     if (!post) {
-      throw new Error('Post not found');
+      return null;
     }
 
     return await hydratePost(ctx, post);

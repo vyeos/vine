@@ -1,27 +1,35 @@
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+'use client';
 
-export default async function EditorPlaceholderPage({
-  params,
-}: {
-  params: Promise<{ workspaceSlug: string }>;
-}) {
-  const { workspaceSlug } = await params;
+import { useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorFallback } from '@/components/ErrorFallback';
+import { Tiptap } from '@/components/editor/Tiptap';
+import { useEditorContext } from '@/components/editor/editor-context';
+
+export default function EditorPage() {
+  const { workspaceSlug, editorRef } = useEditorContext();
+  const [markdownImport] = useState<string | undefined>(() => {
+    if (typeof window === 'undefined' || !workspaceSlug) {
+      return undefined;
+    }
+
+    const storageKey = `vine-markdown-import-${workspaceSlug}`;
+    const raw = sessionStorage.getItem(storageKey) || undefined;
+    if (raw) {
+      sessionStorage.removeItem(storageKey);
+    }
+    return raw;
+  });
 
   return (
-    <div className='p-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle>Editor</CardTitle>
-          <CardDescription>The editor migration has not been finished yet.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild variant='outline'>
-            <Link href={`/dashboard/${workspaceSlug}/posts`}>Back to posts</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className='flex h-full w-full flex-col'>
+        <Tiptap
+          ref={editorRef}
+          workspaceSlug={workspaceSlug}
+          initialMarkdownImport={markdownImport}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }

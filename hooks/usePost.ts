@@ -31,10 +31,10 @@ export function usePost(workspaceSlug: string, postSlug: string) {
   const data = useQuery(
     api.posts.get,
     workspaceSlug && postSlug ? { workspaceSlug, postSlug } : 'skip',
-  ) as Post | undefined;
+  ) as Post | null | undefined;
 
   return {
-    data,
+    data: data ?? null,
     isLoading: !!workspaceSlug && !!postSlug && data === undefined,
     isError: false,
   };
@@ -47,6 +47,27 @@ export function useCreatePost(workspaceSlug: string) {
 
   return {
     ...mutation,
+    mutate: (
+      data: CreatePostData,
+      options?: { onSuccess?: (post: Post) => void; onError?: (error: unknown) => void },
+    ) => {
+      void mutation
+        .mutateAsync({
+          workspaceSlug,
+          data: {
+            ...data,
+            publishedAt: data.publishedAt?.getTime(),
+          },
+        })
+        .then((result) => {
+          toast.success('Post created successfully');
+          options?.onSuccess?.(result);
+        })
+        .catch((error) => {
+          toast.error(getErrorMessage(error, 'Failed to create post'));
+          options?.onError?.(error);
+        });
+    },
     mutateAsync: async (data: CreatePostData) => {
       try {
         const result = await mutation.mutateAsync({
@@ -74,6 +95,28 @@ export function useUpdatePost(workspaceSlug: string, postSlug: string) {
 
   return {
     ...mutation,
+    mutate: (
+      data: UpdatePostData,
+      options?: { onSuccess?: (post: Post) => void; onError?: (error: unknown) => void },
+    ) => {
+      void mutation
+        .mutateAsync({
+          workspaceSlug,
+          postSlug,
+          data: {
+            ...data,
+            publishedAt: data.publishedAt?.getTime(),
+          },
+        })
+        .then((result) => {
+          toast.success('Post updated successfully');
+          options?.onSuccess?.(result);
+        })
+        .catch((error) => {
+          toast.error(getErrorMessage(error, 'Failed to update post'));
+          options?.onError?.(error);
+        });
+    },
     mutateAsync: async (data: UpdatePostData) => {
       try {
         const result = await mutation.mutateAsync({

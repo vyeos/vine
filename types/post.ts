@@ -29,6 +29,8 @@ export interface Post {
     slug: string;
     name: string;
   }>;
+  contentHtml: string;
+  contentJson: ProseMirrorJSON | null;
 }
 
 export interface CreatePostData {
