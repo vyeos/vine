@@ -1,83 +1,125 @@
 # Vine
 
-Primary app for the project, built with Next.js, Convex, and Elysia.
+Vine is a Next.js + Convex headless publishing app. It includes workspace-aware dashboard routes, a rich text editor, media management backed by Convex storage, API keys, and documentation served from the same app.
 
 ## Stack
-- Next.js App Router for the frontend and product routes
-- Convex for auth, database, file storage, and server functions
-- Elysia mounted behind Next route handlers for HTTP-specific APIs
+
+- Next.js App Router for product routes and docs
+- Convex for auth, database, mutations/queries, and file storage
 - Bun for package management and scripts
+- Tailwind CSS + Radix UI for the interface
+- TipTap for rich text editing
+- Fumadocs for docs content
 
 ## Repository Layout
 
-```
+```text
 .
-├── web/       # Main application
-├── LICENSE
-├── README.md
-└── plan.md
+├── app/            # Next.js routes, layouts, route handlers, docs pages
+├── components/     # UI, editor, dashboard, and workspace components
+├── content/docs/   # MDX documentation content
+├── convex/         # Convex schema, queries, mutations, auth config
+├── hooks/          # Client hooks for Convex and UI state
+├── lib/            # Shared utilities and env parsing
+├── public/         # Static assets
+├── types/          # Shared TypeScript types
+├── package.json
+└── bun.lock
 ```
+
+## Route Structure
+
+Workspace routes are slug-first:
+
+- `/:workspaceSlug/dashboard`
+- `/:workspaceSlug/posts`
+- `/:workspaceSlug/editor`
+- `/:workspaceSlug/authors`
+- `/:workspaceSlug/categories`
+- `/:workspaceSlug/tags`
+- `/:workspaceSlug/media`
+- `/:workspaceSlug/members`
+- `/:workspaceSlug/keys`
+
+There are also non-workspace routes such as:
+
+- `/sign-in`
+- `/accept-invite`
+- `/workspaces`
+- `/profile`
+- `/docs`
+
+Legacy `/dashboard/:workspaceSlug/...` URLs are redirected to the current structure.
 
 ## Quick Start
 
 1. Install dependencies
-   ```bash
-   cd /Users/vyeos/personal/vine/web
-   bun install
-   ```
-2. Configure environment in `web/.env.local`
-3. Start Convex
-   ```bash
-   cd /Users/vyeos/personal/vine/web
-   bunx convex dev
-   ```
-4. Start Next.js
-   ```bash
-   cd /Users/vyeos/personal/vine/web
-   bun dev
-   ```
-
-Or use the root scripts:
 
 ```bash
-cd /Users/vyeos/personal/vine
-bun run convex:dev
-bun run dev
+bun install
 ```
 
-## Required Environment
-
-Set the application variables in `web/.env.local`.
-
-Typical local values:
+2. Create `.env.local`
 
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://your-deployment.convex.site
-AUTH_GOOGLE_ID=your-google-oauth-client-id
-AUTH_GOOGLE_SECRET=your-google-oauth-client-secret
+CONVEX_SITE_URL=https://your-deployment.convex.site
+AUTH_GOOGLE_ID=your-google-client-id
+AUTH_GOOGLE_SECRET=your-google-client-secret
 ```
 
-Set the required Convex deployment variables as well:
-- `SITE_URL=http://localhost:3000` for local dev
+3. Start Convex
+
+```bash
+bun run convex:dev
+```
+
+4. Start Next.js
+
+```bash
+bun run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Environment
+
+Application env in `.env.local`:
+
+- `NEXT_PUBLIC_APP_URL`: public app URL for local/dev usage
+- `NEXT_PUBLIC_CONVEX_URL`: Convex client URL used by the frontend
+- `CONVEX_SITE_URL`: Convex site domain used by auth config
+- `AUTH_GOOGLE_ID`: Google OAuth client ID
+- `AUTH_GOOGLE_SECRET`: Google OAuth client secret
+- `RESEND_API_KEY`: optional, only needed for email sending flows
+
+Convex deployment env should also include:
+
+- `SITE_URL`: app URL for the deployment environment
 - `JWT_PRIVATE_KEY`
 - `JWKS`
 
-## Root Scripts
+## Scripts
 
-- `bun run dev`
-- `bun run build`
-- `bun run start`
-- `bun run lint`
-- `bun run convex:dev`
-- `bun run convex:deploy`
+- `bun run dev`: start the Next.js dev server
+- `bun run start`: start the production server
+- `bun run lint`: run ESLint
+- `bun run convex:codegen`: generate `convex/_generated`
+- `bun run convex:dev`: run Convex in development/watch mode
+- `bun run convex:deploy`: deploy Convex functions/schema
+
+`postinstall` runs Convex codegen automatically, which is required because `convex/_generated` is not committed.
+
+## Media
+
+Media uploads use Convex storage. Media records store `storageId`, and the app resolves file URLs from Convex storage when rendering the media library or editor image picker.
 
 ## Notes
 
-- The old React/Node/Postgres code has been removed.
-- The active application lives under `web/`.
-- Docs are now served from the main Next app at `/docs`.
+- This repository no longer uses the old Express/Vite monorepo structure.
+- The active application lives at the repository root.
+- Deployments should install with Bun so `postinstall` and Convex codegen run correctly.
 
 ## License
 
