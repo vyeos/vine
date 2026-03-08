@@ -1,0 +1,242 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Search, Plus, MoreVertical, UserX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import type { Member, PendingInvitation, MemberRole } from '@/types/member';
+import { ROLE_HIERARCHY } from '@/types/member';
+import { getWorkspacePath } from '@/lib/utils';
+
+type Props = {
+  members: Member[];
+  invitations: PendingInvitation[];
+  currentUserRole: MemberRole;
+  currentUserId: string;
+  workspaceSlug: string;
+  onEdit: (member: Member) => void;
+  onRemove: (member: Member) => void;
+  onRevokeInvitation: (invitation: PendingInvitation) => void;
+  onLeave: () => void;
+};
+
+function canManageMember(currentRole: MemberRole, targetRole: MemberRole): boolean {
+  return ROLE_HIERARCHY[currentRole] > ROLE_HIERARCHY[targetRole];
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
+
+function RoleBadge({ role }: { role: MemberRole }) {
+  return (
+    <Badge variant='secondary' className='font-normal'>
+      {role.charAt(0).toUpperCase() + role.slice(1)}
+    </Badge>
+  );
+}
+
+export default function MemberList({
+  members,
+  invitations,
+  currentUserRole,
+  currentUserId,
+  workspaceSlug,
+  onEdit,
+  onRemove,
+  onRevokeInvitation,
+  onLeave,
+}: Props) {
+  const [search, setSearch] = useState('');
+  const router = useRouter();
+
+  const filteredMembers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return members;
+    return members.filter(
+      (member) => member.name?.toLowerCase().includes(q) || member.email?.toLowerCase().includes(q),
+    );
+  }, [members, search]);
+
+  const canInvite = currentUserRole === 'owner' || currentUserRole === 'admin';
+
+  return (
+    <Card className='animate-in fade-in-50 zoom-in-95 duration-300'>
+      <CardHeader>
+        <div>
+          <CardTitle>Members</CardTitle>
+          <CardDescription>Manage workspace members</CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className='space-y-6'>
+        <div className='flex items-center gap-2 pt-0 pb-4'>
+          <div className='relative flex-1 sm:flex-initial'>
+            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder='Search team members...'
+              className='pl-9 sm:w-64'
+            />
+          </div>
+          {canInvite && (
+            <Button
+              onClick={() =>
+                router.push(getWorkspacePath(workspaceSlug, 'members/invite'))
+              }
+            >
+              <Plus size={16} className='mr-1' />
+              Invite
+            </Button>
+          )}
+          {currentUserRole !== 'owner' && (
+            <Button variant='outline' onClick={onLeave}>
+              Leave Team
+            </Button>
+          )}
+        </div>
+        <div>
+          <div className='mb-3 text-sm font-medium'>Current Members</div>
+          {filteredMembers.length === 0 ? (
+            <Empty className='border-dashed'>
+              <EmptyHeader>
+                <EmptyMedia variant='icon'>
+                  <UserX />
+                </EmptyMedia>
+                <EmptyTitle>No Members</EmptyTitle>
+                <EmptyDescription>
+                  {search ? `No members found matching \"${search}\"` : 'No members in this workspace'}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className='divide-y'>
+              {filteredMembers.map((member, idx) => {
+                const isCurrentUser = member.userId === currentUserId;
+                const canEdit = canManageMember(currentUserRole, member.role);
+                const canDelete = canManageMember(currentUserRole, member.role) && !isCurrentUser;
+
+                return (
+                  <div
+                    key={member.userId}
+                    className='flex items-center justify-between py-3 animate-in fade-in-50 slide-in-from-bottom-1 duration-300'
+                    style={{ animationDelay: `${Math.min(idx, 6) * 40}ms` }}
+                  >
+                    <div className='flex min-w-0 items-center gap-3'>
+                      <Avatar className='h-9 w-9'>
+                        <AvatarImage src={member.avatar} alt={member.name} />
+                        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className='min-w-0'>
+                        <div className='truncate font-medium'>
+                          {member.name}
+                          {isCurrentUser && ' (You)'}
+                        </div>
+                        <div className='truncate text-sm text-muted-foreground'>{member.email}</div>
+                      </div>
+                    </div>
+                    <div className='flex items-center gap-3'>
+                      {(canEdit || canDelete) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' size='icon' className='h-8 w-8'>
+                              <MoreVertical size={16} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            {canEdit && <DropdownMenuItem onClick={() => onEdit(member)}>Edit Role</DropdownMenuItem>}
+                            {canDelete && (
+                              <DropdownMenuItem onClick={() => onRemove(member)} className='text-destructive'>
+                                Remove
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                      <RoleBadge role={member.role} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {invitations.length > 0 && (
+          <div>
+            <div className='mb-3 text-sm font-medium'>Pending Invitations</div>
+            <div className='divide-y'>
+              {invitations.map((invitation, idx) => (
+                <div
+                  key={invitation.id}
+                  className='flex items-center justify-between py-3 animate-in fade-in-50 slide-in-from-bottom-1 duration-300'
+                  style={{ animationDelay: `${Math.min(idx, 6) * 40}ms` }}
+                >
+                  <div className='flex min-w-0 items-center gap-3'>
+                    <Avatar className='h-9 w-9'>
+                      <AvatarFallback className='bg-muted text-muted-foreground text-xs'>
+                        {invitation.email.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className='min-w-0'>
+                      <div className='truncate text-sm font-medium text-muted-foreground'>
+                        {invitation.email}
+                      </div>
+                      <div className='text-xs text-muted-foreground/70'>
+                        Invited {new Date(invitation.invitedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-3'>
+                    {canManageMember(currentUserRole, invitation.role) && (
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='text-destructive hover:text-destructive hover:bg-destructive/10'
+                        onClick={() => onRevokeInvitation(invitation)}
+                      >
+                        Revoke
+                      </Button>
+                    )}
+                    <RoleBadge role={invitation.role} />
+                    <Badge variant='outline' className='text-xs'>
+                      Pending
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
