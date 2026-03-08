@@ -110,6 +110,7 @@ export default defineSchema({
     size: v.number(),
     r2Key: v.string(),
     publicUrl: v.string(),
+    storageId: v.optional(v.id('_storage')),
     createdAt: v.number(),
     thumbhashBase64: v.optional(v.string()),
     aspectRatio: v.optional(v.number()),

@@ -2,6 +2,14 @@
 
 import { getAuthUserId } from '@convex-dev/auth/server';
 
+export type MemberRole = 'owner' | 'admin' | 'member';
+
+export const ROLE_HIERARCHY: Record<MemberRole, number> = {
+  owner: 3,
+  admin: 2,
+  member: 1,
+};
+
 export async function requireUserId(ctx: Parameters<typeof getAuthUserId>[0]) {
   const userId = await getAuthUserId(ctx);
 
@@ -39,4 +47,35 @@ export async function requireWorkspaceMembership(ctx: any, workspaceSlug: string
   }
 
   return { userId, workspace, membership };
+}
+
+export async function requireWorkspaceRole(
+  ctx: any,
+  workspaceSlug: string,
+  minimumRole: MemberRole,
+) {
+  const result = await requireWorkspaceMembership(ctx, workspaceSlug);
+
+  if (ROLE_HIERARCHY[result.membership.role as MemberRole] < ROLE_HIERARCHY[minimumRole]) {
+    throw new Error('You do not have permission to perform this action');
+  }
+
+  return result;
+}
+
+export function canManageRole(actingRole: MemberRole, targetRole: MemberRole) {
+  return ROLE_HIERARCHY[actingRole] > ROLE_HIERARCHY[targetRole];
+}
+
+export function canAssignRole(actingRole: MemberRole, nextRole: MemberRole) {
+  return ROLE_HIERARCHY[actingRole] > ROLE_HIERARCHY[nextRole];
+}
+
+export async function countWorkspaceOwners(ctx: any, workspaceId: string) {
+  const members = await ctx.db
+    .query('workspaceMembers')
+    .withIndex('by_workspace_id', (q: any) => q.eq('workspaceId', workspaceId))
+    .collect();
+
+  return members.filter((member: any) => member.role === 'owner').length;
 }
