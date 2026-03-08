@@ -1,0 +1,65 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/theme-toggle';
+
+export function NavUser({
+  user,
+}: {
+  user: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}) {
+  const router = useRouter();
+
+  const initials = user.name
+    .split(' ')
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem className='hidden group-data-[state=collapsed]:block'>
+        <div className='flex justify-center'>
+          <ThemeToggle />
+        </div>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <div className='flex w-full items-center gap-2 group-data-[state=expanded]:gap-2'>
+          <SidebarMenuButton
+            size='lg'
+            className='flex-1 justify-center group-data-[state=expanded]:justify-start'
+            onClick={() => router.push('/profile')}
+            aria-label='Open profile'
+            title='Open profile'
+          >
+            <Avatar className='h-8 w-8 rounded-lg'>
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback className='rounded-lg bg-primary text-primary-foreground'>
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className='grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden'>
+              <span className='truncate font-medium'>{user.name}</span>
+              <span className='truncate text-xs'>{user.email}</span>
+            </div>
+          </SidebarMenuButton>
+          <div className='hidden group-data-[state=expanded]:block'>
+            <ThemeToggle />
+          </div>
+        </div>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}

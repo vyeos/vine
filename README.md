@@ -1,11 +1,12 @@
 # Hive
 
-Full-stack headless content collaboration platform composed of an Express/Drizzle API (`backend/`) and a Vite/React client (`frontend/`). The codebase is organized as a lightweight monorepo where each package can be developed independently while sharing a common architecture and conventions.
+Full-stack headless content collaboration platform composed of an Express/Drizzle API (`backend/`) and a Vite/React client (`frontend/`). The codebase is organized as a lightweight monorepo where each package can be developed independently while sharing a common architecture and conventions. A new Next.js + Convex migration target now lives in `web/`.
 
 ## Architecture at a Glance
 
 - **Backend** (`backend/`): Express 5 server with modular controllers for authentication, workspace membership, posts, authors, categories, tags, and invitations. Uses Drizzle ORM for schema migrations, Pino for structured logging, Resend for transactional email templates, and Zod-powered DTO validation.
 - **Frontend** (`frontend/`): Vite + React 19 SPA styled with Tailwind, Radix UI, and motion libraries. State and server cache are driven by TanStack Query; forms rely on React Hook Form + Zod. Rich text editing is provided by TipTap.
+- **Web Migration Target** (`web/`): Next.js App Router package that starts the migration to Convex-backed product data, Google-only auth, and Elysia-mounted HTTP routes while leaving the legacy apps intact.
 - **Database**: PostgreSQL. The repo includes Docker instructions and Drizzle migrations (`backend/drizzle/`) for reproducible schema management.
 - **Email + Notifications**: Reusable templates under `backend/src/templates` for password resets, verification, and workspace invitations sent through Resend.
 
@@ -22,6 +23,7 @@ Full-stack headless content collaboration platform composed of an Express/Drizzl
 .
 ├── backend/   # Express API, Drizzle migrations, email templates
 ├── frontend/  # Vite + React client
+├── web/       # Next.js + Convex migration target
 ├── LICENSE
 └── README.md  # You are here
 ```
@@ -49,6 +51,7 @@ Full-stack headless content collaboration platform composed of an Express/Drizzl
 5. **Run services**
    - Backend: `npm run dev` (default on port 3000)
    - Frontend: `npm run dev` (default on port 5173) with `VITE_HIVE_API_BASE_URL` pointing to the backend URL
+   - Web migration target: `cd web && npm install && npx convex dev && npm run dev`
 
 ## Environment Variables
 
@@ -115,6 +118,7 @@ VITE_APP_URL=http://localhost:5173
 
 - `backend/README.md`: API service setup, database scripts, Docker helpers
 - `frontend/README.md`: SPA development workflow and environment configuration
+- `web/README.md`: Next.js + Convex migration bootstrap
 - `backend/API_ROADMAP.md`: Open roadmap for future endpoints
 
 ## License
