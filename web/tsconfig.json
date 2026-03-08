@@ -27,6 +27,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "fumadocs-mdx:collections/*": [
+        ".source/*"
       ]
     }
   },
@@ -34,12 +37,15 @@
     "next-env.d.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
+    ".source/**/*.ts",
     "components/**/*.ts",
     "components/**/*.tsx",
     "hooks/**/*.ts",
     "hooks/**/*.tsx",
     "lib/**/*.ts",
     "lib/**/*.tsx",
+    "mdx-components.tsx",
+    "source.config.ts",
     "types/**/*.ts",
     "types/**/*.tsx",
     "contexts/**/*.ts",
