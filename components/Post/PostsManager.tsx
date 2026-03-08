@@ -52,7 +52,7 @@ export default function PostsManager() {
 
   const handleImportMarkdown = (raw: string) => {
     if (!workspaceSlug) return;
-    sessionStorage.setItem(`hive-markdown-import-${workspaceSlug}`, raw);
+    sessionStorage.setItem(`vine-markdown-import-${workspaceSlug}`, raw);
     router.push(`/dashboard/${workspaceSlug}/editor`);
   };
 

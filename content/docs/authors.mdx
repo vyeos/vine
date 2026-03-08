@@ -1,6 +1,6 @@
 ---
 title: Authors
-description: Retrieve author information and profiles from your Hive workspace
+description: Retrieve author information and profiles from your Vine workspace
 ---
 
 The Authors API provides information about all authors in your workspace. Use this to display author bios, headshots, social links, or show content by specific authors.
@@ -8,13 +8,13 @@ The Authors API provides information about all authors in your workspace. Use th
 ## Endpoint
 
 ```
-GET https://api.hivecms.online/api/public/v1/{API_KEY}/authors
+GET https://api.vinecms.online/api/public/v1/{API_KEY}/authors
 ```
 
 ## Example Request
 
 ```bash
-curl "https://api.hivecms.online/api/public/v1/{API_KEY}/authors"
+curl "https://api.vinecms.online/api/public/v1/{API_KEY}/authors"
 ```
 
 ## Example Response
@@ -66,7 +66,7 @@ Each author object contains:
 ```js
 // Fetch authors
 const response = await fetch(
-  'https://api.hivecms.online/api/public/v1/{API_KEY}/authors'
+  'https://api.vinecms.online/api/public/v1/{API_KEY}/authors'
 );
 const { data: authors } = await response.json();
 
@@ -85,7 +85,7 @@ Use the author `id` to filter posts:
 
 ```bash
 # Filter posts by author
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?author=auth_01"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?author=auth_01"
 ```
 
 ### Building Author Cards

@@ -7,7 +7,7 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Hive",
+  title: "Vine",
   description: "A simple CMS for your next project.",
 };
 

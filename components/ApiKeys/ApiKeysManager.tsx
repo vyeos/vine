@@ -128,7 +128,7 @@ export default function ApiKeysManager() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `hive-api-key-${payload.metadata.id}.txt`;
+    anchor.download = `vine-api-key-${payload.metadata.id}.txt`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -202,7 +202,7 @@ export default function ApiKeysManager() {
                     at any time. Only workspace owners and admins can create or
                     delete keys; members can view existing keys.{' '}
                     <a
-                      href='https://hivecms.online/docs'
+                      href='https://vinecms.online/docs'
                       target='_blank'
                       rel='noopener noreferrer'
                       className='text-primary underline hover:text-primary/80 transition-colors'

@@ -5,8 +5,8 @@ export type ProseMirrorJSON = {
   [key: string]: unknown;
 };
 
-export const DEFAULT_METADATA_STORAGE_PREFIX = 'hive-editor-metadata';
-export const DEFAULT_CONTENT_STORAGE_PREFIX = 'hive-editor-content';
+export const DEFAULT_METADATA_STORAGE_PREFIX = 'vine-editor-metadata';
+export const DEFAULT_CONTENT_STORAGE_PREFIX = 'vine-editor-content';
 
 /**
  * Generates a workspace-specific storage key

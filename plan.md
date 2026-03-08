@@ -153,3 +153,61 @@
 - Full feature parity is required apart from the intentional auth simplification.
 - Resend is optional and only needed if invite/notification emails remain email-based.
 - Thumbhash is unrelated to auth and should only be kept if preserving the current media preview UX.
+
+## Public API Host: `api.vinecms.online`
+
+### Summary
+- Use `api.vinecms.online` as the dedicated public-read API host.
+- Keep the current public URL shape unchanged: `/api/public/v1/{API_KEY}/...`.
+- Serve that host from the same Next.js deployment as the main app rather than creating a separate service.
+- Keep auth and app traffic off this host. Google OAuth and Convex auth callbacks stay on the app and Convex auth hosts, not `api.vinecms.online`.
+- Implement the public API in the existing Elysia layer behind `app/api/[[...slug]]/route.ts`, backed by Convex queries.
+
+### Implementation Changes
+- Attach `api.vinecms.online` as an additional custom domain on the same deployment that serves the Next app.
+- Add DNS for `api.vinecms.online` to that deployment target.
+- Route by `Host` header:
+  - `api.vinecms.online` serves only the public API surface.
+  - the main app domain continues serving the product UI and docs.
+- Reject non-public routes on `api.vinecms.online` with `404`.
+- Do not move auth onto `api.vinecms.online`; keep Convex auth callback URLs unchanged.
+- Expand `app/api/[[...slug]]/route.ts` from scaffold to the real Elysia public API.
+- Preserve these endpoints under `https://api.vinecms.online/api/public/v1/...`:
+  - `GET /status`
+  - `GET /{API_KEY}/posts`
+  - `GET /{API_KEY}/posts/{postSlug}`
+  - `GET /{API_KEY}/authors`
+  - `GET /{API_KEY}/categories`
+  - `GET /{API_KEY}/tags`
+  - `GET /{API_KEY}/stats`
+- Implement API-key auth in Elysia by hashing the path API key with the same SHA-256 logic used at key creation time and resolving `workspaceApiKeys.hashedKey`.
+- Update `lastUsedAt` and optionally `lastUsedIp` on successful key use.
+- Back the endpoints with dedicated Convex public-read queries rather than reusing dashboard-oriented queries directly.
+- Keep documented response shapes stable, with post filters `limit`, `offset`, `category`, `tags`, and `author`.
+- Public reads must only return published and visible content.
+- Return JSON errors with proper status codes: `400`, `401`, `404`, `429`, and `500`.
+- Enable `GET`-only CORS for the public API host.
+- Add lightweight rate limiting per API key or IP.
+- Keep API keys path-based for compatibility.
+- Update all docs and examples to use `api.vinecms.online`.
+
+### Public API Test Plan
+- `api.vinecms.online/api/public/v1/status` works.
+- Non-public routes on `api.vinecms.online` return `404`.
+- Main app domain still serves UI normally.
+- Valid key returns workspace data; invalid or deleted key returns `401`.
+- Post list only includes published and visible posts.
+- Post detail returns full post content.
+- Filters and pagination match docs.
+- Authors, categories, tags, and stats stay workspace-scoped.
+- Browser `GET` requests succeed with CORS.
+- `lastUsedAt` updates on successful requests.
+- Rate-limited requests return `429`.
+
+### Public API Assumptions
+- `api.vinecms.online` is the correct target domain.
+- The API host is public-read only.
+- The path shape remains `/api/public/v1/...`.
+- The same Next deployment serves both the app and API host.
+- Auth stays on the existing app and Convex auth hosts.
+- Public API data is served through Elysia plus Convex queries, not Convex HTTP actions.

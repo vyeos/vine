@@ -1,32 +1,32 @@
 ---
 title: API Versioning
-description: Understanding Hive Public API versions and migration paths
+description: Understanding Vine Public API versions and migration paths
 ---
 
 ## Overview
 
-The Hive Public Content API uses semantic versioning to ensure stability and allow for improvements over time. This guide explains our versioning strategy and how it affects your integration.
+The Vine Public Content API uses semantic versioning to ensure stability and allow for improvements over time. This guide explains our versioning strategy and how it affects your integration.
 
 ## Current Version
 
-**v1** is the current stable version of the Hive Public API. All endpoints are available under `/api/public/v1`.
+**v1** is the current stable version of the Vine Public API. All endpoints are available under `/api/public/v1`.
 
 ## URL Format
 
 The version is included in the URL path:
 
 ```
-https://api.hivecms.online/api/public/{VERSION}/{API_KEY}/{ENDPOINT}
+https://api.vinecms.online/api/public/{VERSION}/{API_KEY}/{ENDPOINT}
 ```
 
 ### Example
 
 ```bash
 # Versioned URL (recommended)
-curl "https://api.hivecms.online/api/public/v1/{API_KEY}/posts"
+curl "https://api.vinecms.online/api/public/v1/{API_KEY}/posts"
 
 # Legacy URL (also works, auto-routes to v1)
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts"
 ```
 
 ## Backward Compatibility

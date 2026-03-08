@@ -12,8 +12,8 @@ const Navbar = () => {
         <div className='flex items-center gap-12'>
           <div className='flex items-center justify-center p-2'>
             <Image
-              src='/hive.png'
-              alt='Hive Logo'
+              src='/vine.png'
+              alt='Vine Logo'
               width={32}
               height={32}
               className='object-contain'

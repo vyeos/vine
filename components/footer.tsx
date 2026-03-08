@@ -60,7 +60,7 @@ const Footer = () => {
             </span>
 
             <div className="flex items-center gap-5 text-muted-foreground">
-              <Link href="https://github.com/ni3rav/hive" target="_blank">
+              <Link href="https://github.com/vyeos/vine" target="_blank">
                 <GithubIcon className="h-5 w-5" />
               </Link>
             </div>

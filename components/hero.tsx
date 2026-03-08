@@ -41,14 +41,14 @@ export default function Hero({ badgeText }: { badgeText: string }) {
       </div>
       <div className='relative mx-auto aspect-video w-full max-w-(--breakpoint-xl) overflow-hidden rounded-xl border border-foreground/10 shadow-[0_0_40px_0_rgba(0,0,0,0.1)] shadow-primary/15'>
         <Image
-          src='/hive-dashboard.png'
-          alt='Hive Dashboard Dark'
+          src='/vine-dashboard.png'
+          alt='Vine Dashboard Dark'
           className='hidden object-cover dark:block'
           fill
         />
         <Image
-          src='/hive-dashboard-light.png'
-          alt='Hive Dashboard Light'
+          src='/vine-dashboard-light.png'
+          alt='Vine Dashboard Light'
           className='block object-cover dark:hidden'
           fill
         />

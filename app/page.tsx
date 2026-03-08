@@ -14,7 +14,7 @@ export default function HomePage() {
       <FAQ />
       <Cta
         heading='Ready to get started?'
-        description='Get started with Hive today and start managing your content the smart way.'
+        description='Get started with Vine today and start managing your content the smart way.'
         buttons={{
           primary: {
             text: 'Get Started',

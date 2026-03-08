@@ -7,24 +7,24 @@ import {
 
 const faq = [
   {
-    question: "What is Hive?",
+    question: "What is Vine?",
     answer:
-      "Hive is a simple, straightforward CMS designed for teams and creators who want to manage content in one place and fetch it from any frontend using a clean API.",
+      "Vine is a simple, straightforward CMS designed for teams and creators who want to manage content in one place and fetch it from any frontend using a clean API.",
   },
   {
-    question: "Which frameworks does Hive support?",
+    question: "Which frameworks does Vine support?",
     answer:
-      "Hive works with any framework that can make HTTP requests. This includes Next.js, Astro, Express, React, Vue, and many others.",
+      "Vine works with any framework that can make HTTP requests. This includes Next.js, Astro, Express, React, Vue, and many others.",
   },
   {
     question: "How does the API work?",
     answer:
-      "Hive provides a straightforward REST API that allows you to fetch content programmatically. Simply generate API keys for your workspace and start fetching posts, categories, and tags.",
+      "Vine provides a straightforward REST API that allows you to fetch content programmatically. Simply generate API keys for your workspace and start fetching posts, categories, and tags.",
   },
   {
     question: "Can multiple users collaborate?",
     answer:
-      "Yes! Hive supports workspace-based collaboration, allowing multiple team members to work together on content creation and management seamlessly.",
+      "Yes! Vine supports workspace-based collaboration, allowing multiple team members to work together on content creation and management seamlessly.",
   },
 ];
 

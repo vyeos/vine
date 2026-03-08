@@ -1,10 +1,10 @@
 export function generateStructuredData() {
-  const baseUrl = "https://hivecms.online";
+  const baseUrl = "https://vinecms.online";
 
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "Hive CMS",
+    name: "Vine CMS",
     url: baseUrl,
     description:
       "Write content in one place and fetch it from any frontend with a straightforward API, so your team can focus on what to say instead of how to wire it up.",
@@ -27,23 +27,23 @@ export function generateStructuredData() {
     },
     publisher: {
       "@type": "Organization",
-      name: "Hive",
+      name: "Vine",
       url: baseUrl,
     },
-    screenshot: `${baseUrl}/hive-dashboard.png`,
+    screenshot: `${baseUrl}/vine-dashboard.png`,
   };
 }
 
 export function generateOrganizationData() {
-  const baseUrl = "https://hivecms.online";
+  const baseUrl = "https://vinecms.online";
 
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Hive",
+    name: "Vine",
     url: baseUrl,
     logo: `${baseUrl}/og.png`,
-    sameAs: ["https://twitter.com/ni3rav", "https://github.com/ni3rav/hive"],
+    sameAs: ["https://twitter.com/ni3rav", "https://github.com/vyeos/vine"],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Technical Support",
@@ -53,12 +53,12 @@ export function generateOrganizationData() {
 }
 
 export function generateWebSiteData() {
-  const baseUrl = "https://hivecms.online";
+  const baseUrl = "https://vinecms.online";
 
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Hive",
+    name: "Vine",
     url: baseUrl,
     description:
       "A simple CMS for your next project. Write content in one place and fetch it from any frontend.",
@@ -113,11 +113,11 @@ export function generateArticleData(params: {
     },
     publisher: {
       "@type": "Organization",
-      name: "Hive",
-      url: "https://hivecms.online",
+      name: "Vine",
+      url: "https://vinecms.online",
       logo: {
         "@type": "ImageObject",
-        url: "https://hivecms.online/og.png",
+        url: "https://vinecms.online/og.png",
       },
     },
     inLanguage: "en-US",

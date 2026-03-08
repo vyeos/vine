@@ -238,7 +238,7 @@ export default function AuthorList({
                       <DropdownMenuContent align='end' className='w-40'>
                         <DropdownMenuItem
                           onClick={() => onEditAuthor(author)}
-                          className='focus:bg-yellow-100 data-[highlighted]:bg-yellow-100 data-[highlighted]:text-yellow-900'
+                          className='focus:bg-green-100 data-[highlighted]:bg-green-100 data-[highlighted]:text-green-900'
                         >
                           Edit
                         </DropdownMenuItem>

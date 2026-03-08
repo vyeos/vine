@@ -1,4 +1,4 @@
-// ../source.config.ts
+// source.config.ts
 import {
   defineConfig,
   defineDocs,

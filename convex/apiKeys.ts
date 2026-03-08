@@ -68,7 +68,7 @@ export const create = mutation({
       throw new Error('Workspace already has 3 API keys');
     }
 
-    const apiKey = `hive-${workspace.slug}-${randomBase62(14)}`;
+    const apiKey = `vine-${workspace.slug}-${randomBase62(14)}`;
     const hashedKey = await sha256(apiKey);
 
     const id = await ctx.db.insert('workspaceApiKeys', {

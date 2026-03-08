@@ -15,7 +15,7 @@ export function GoogleSignInForm() {
     <div className='flex flex-col gap-6'>
       <Card>
         <CardHeader className='text-center'>
-          <CardTitle className='text-xl'>🐝 Welcome back to Hive</CardTitle>
+          <CardTitle className='text-xl'>🌿 Welcome back to Vine</CardTitle>
           <CardDescription>
             Sign in with Google to access your account.
           </CardDescription>

@@ -7,7 +7,7 @@ export function baseOptions(): BaseLayoutProps {
       mode: 'light-dark-system',
     },
     nav: {
-      title: 'Hive API Docs',
+      title: 'Vine API Docs',
       url: '/docs',
     },
     links: [

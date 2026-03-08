@@ -1,9 +1,9 @@
 ---
 title: Posts
-description: Browse and fetch individual posts from your Hive workspace
+description: Browse and fetch individual posts from your Vine workspace
 ---
 
-The Posts API allows you to retrieve lists of posts and individual post details. Use this to display blog posts, articles, or any content published in your Hive workspace.
+The Posts API allows you to retrieve lists of posts and individual post details. Use this to display blog posts, articles, or any content published in your Vine workspace.
 
 ## Browse All Posts
 
@@ -12,7 +12,7 @@ Retrieve a paginated list of posts with optional filtering.
 ### Endpoint
 
 ```
-GET https://api.hivecms.online/api/public/v1/{API_KEY}/posts
+GET https://api.vinecms.online/api/public/v1/{API_KEY}/posts
 ```
 
 ### Query Parameters
@@ -28,7 +28,7 @@ GET https://api.hivecms.online/api/public/v1/{API_KEY}/posts
 ### Example Request
 
 ```bash
-curl "https://api.hivecms.online/api/public/v1/{API_KEY}/posts?limit=5&tags=guides,updates"
+curl "https://api.vinecms.online/api/public/v1/{API_KEY}/posts?limit=5&tags=guides,updates"
 ```
 
 ### Example Response
@@ -67,7 +67,7 @@ Retrieve the full details of a specific post by its slug.
 ### Endpoint
 
 ```
-GET https://api.hivecms.online/api/public/v1/{API_KEY}/posts/{postSlug}
+GET https://api.vinecms.online/api/public/v1/{API_KEY}/posts/{postSlug}
 ```
 
 ### Path Parameters
@@ -79,16 +79,16 @@ GET https://api.hivecms.online/api/public/v1/{API_KEY}/posts/{postSlug}
 ### Example Request
 
 ```bash
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts/welcome-to-hive"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts/welcome-to-vine"
 ```
 
 ### Example Response
 
 ```json
 {
-  "title": "Welcome to Hive",
-  "slug": "welcome-to-hive",
-  "excerpt": "A brief introduction to Hive CMS.",
+  "title": "Welcome to Vine",
+  "slug": "welcome-to-vine",
+  "excerpt": "A brief introduction to Vine CMS.",
   "publishedAt": "2025-01-15T10:00:00.000Z",
   "updatedAt": "2025-01-15T10:00:00.000Z",
   "category": { "name": "Announcements", "slug": "announcements" },
@@ -97,7 +97,7 @@ curl "https://api.hivecms.online/api/public/{API_KEY}/posts/welcome-to-hive"
     { "name": "getting-started", "slug": "getting-started" }
   ],
   "author": { "id": "auth_01", "name": "Ava Stone" },
-  "htmlContent": "<h1>Welcome to Hive</h1><p>This is the full HTML content...</p>"
+  "htmlContent": "<h1>Welcome to Vine</h1><p>This is the full HTML content...</p>"
 }
 ```
 
@@ -128,25 +128,25 @@ If the post slug doesn't exist, you'll receive a `404` status with:
 ### Filter by Category
 
 ```bash
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?category=product"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?category=product"
 ```
 
 ### Filter by Multiple Tags
 
 ```bash
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?tags=guides,updates"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?tags=guides,updates"
 ```
 
 ### Filter by Author
 
 ```bash
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?author=auth_01"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?author=auth_01"
 ```
 
 ### Combine Filters
 
 ```bash
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?category=product&tags=updates&limit=10"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?category=product&tags=updates&limit=10"
 ```
 
 ## Pagination
@@ -155,13 +155,13 @@ Use `limit` and `offset` to implement pagination:
 
 ```bash
 # First page (posts 0-9)
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?limit=10&offset=0"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?limit=10&offset=0"
 
 # Second page (posts 10-19)
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?limit=10&offset=10"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?limit=10&offset=10"
 
 # Third page (posts 20-29)
-curl "https://api.hivecms.online/api/public/{API_KEY}/posts?limit=10&offset=20"
+curl "https://api.vinecms.online/api/public/{API_KEY}/posts?limit=10&offset=20"
 ```
 
 The response includes `total`, `offset`, and `limit` to help you calculate pagination controls.

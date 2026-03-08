@@ -226,7 +226,7 @@ export default function CategoryList({
                       <DropdownMenuContent align='end' className='w-40'>
                         <DropdownMenuItem
                           onClick={() => onEditCategory(category)}
-                          className='focus:bg-yellow-100 data-[highlighted]:bg-yellow-100 data-[highlighted]:text-yellow-900'
+                          className='focus:bg-green-100 data-[highlighted]:bg-green-100 data-[highlighted]:text-green-900'
                         >
                           Edit
                         </DropdownMenuItem>
