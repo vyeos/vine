@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const navItems = [
-  { title: 'Dashboard', url: '', icon: SquareTerminal },
+  { title: 'Dashboard', url: '', icon: SquareTerminal, exact: true },
   { title: 'Posts', url: 'posts', icon: FileText },
   { title: 'Authors', url: 'authors', icon: Users },
   { title: 'Categories', url: 'categories', icon: Layers },

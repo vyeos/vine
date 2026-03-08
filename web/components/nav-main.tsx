@@ -19,6 +19,7 @@ export function NavMain({
     title: string;
     url: string;
     icon: LucideIcon;
+    exact?: boolean;
   }[];
   label?: string;
 }) {
@@ -29,9 +30,9 @@ export function NavMain({
       {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
       <SidebarMenu>
         {items.map((item) => {
-          const isActive =
-            pathname === item.url ||
-            (item.url !== '/workspaces' && pathname.startsWith(`${item.url}/`));
+          const isActive = item.exact
+            ? pathname === item.url
+            : pathname === item.url || pathname.startsWith(`${item.url}/`);
 
           return (
             <SidebarMenuItem key={item.title}>
