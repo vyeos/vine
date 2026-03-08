@@ -524,40 +524,8 @@ export function EditorSidebar() {
         <TabsContent value='metadata' className='flex-1 min-h-0'>
           <ScrollArea className='h-full pr-2 [&_[data-slot=scroll-area-thumb]]:bg-foreground/10'>
             <div className='flex flex-col gap-4 px-6 py-4 text-sm'>
-              {/* Visibility row */}
-              <div className='mt-1 flex items-center justify-between'>
-                <span className='flex items-center gap-2 text-sm font-medium'>
-                  <span>Visible</span>
-                  <span className='-ml-2 text-destructive'>*</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        Determines if the post should be displayed in API
-                        response or not
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </span>
-                <Controller
-                  control={control}
-                  name='visible'
-                  render={({ field }) => (
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        syncToParent();
-                      }}
-                    />
-                  )}
-                />
-              </div>
-
               {/* Title & description */}
-              <div className='mt-3 space-y-1'>
+              <div className='space-y-1'>
                 <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
                   <span>Title</span>
                   <span className='-ml-2 text-destructive'>*</span>
@@ -585,7 +553,7 @@ export function EditorSidebar() {
                 )}
               </div>
 
-              <div className='mt-3 space-y-1'>
+              <div className='space-y-1'>
                 <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
                   <span>Description</span>
                   <Tooltip>
@@ -613,7 +581,7 @@ export function EditorSidebar() {
               </div>
 
               {/* Slug */}
-              <div className='mt-3 space-y-1'>
+              <div className='space-y-1'>
                 <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
                   <span>Slug</span>
                   <span className='-ml-2 text-destructive'>*</span>
@@ -651,7 +619,7 @@ export function EditorSidebar() {
               </div>
 
               {/* Author */}
-              <div className='mt-3 space-y-1'>
+              <div className='space-y-1'>
                 <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
                   <span>Author</span>
                   <Tooltip>
@@ -680,69 +648,138 @@ export function EditorSidebar() {
                 />
               </div>
 
-              {/* Category */}
-              <div className='mt-3 space-y-1'>
-                <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
-                  <span>Category</span>
+              {/* Category & Tags — side by side */}
+              <div className='grid grid-cols-2 gap-3'>
+                <div className='space-y-1'>
+                  <label className='mb-2 flex items-center gap-1 text-base font-medium text-muted-foreground'>
+                    <span>Category</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Assign a category to organize your post</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </label>
+                  <Controller
+                    control={control}
+                    name='categorySlug'
+                    render={({ field }) => (
+                      <CategorySelect
+                        value={field.value ?? null}
+                        onChange={(categorySlug) => {
+                          field.onChange(categorySlug || undefined);
+                          syncToParent();
+                        }}
+                        placeholder='Select...'
+                        allowCreate
+                      />
+                    )}
+                  />
+                </div>
+                <div className='space-y-1'>
+                  <label className='mb-2 flex items-center gap-1 text-base font-medium text-muted-foreground'>
+                    <span>Tags</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Add tags to help categorize and find your post</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </label>
+                  <Controller
+                    control={control}
+                    name='tagSlugs'
+                    render={({ field }) => (
+                      <TagMultiSelect
+                        value={field.value || []}
+                        onChange={(tagSlugs) => {
+                          field.onChange(tagSlugs);
+                          syncToParent();
+                        }}
+                        placeholder='Select...'
+                        allowCreate
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Visible, Status & Published at — grouped */}
+              <Separator className='bg-foreground/10' />
+
+              <div className='flex items-center justify-between'>
+                <span className='flex items-center gap-2 text-sm font-medium'>
+                  <span>Visible</span>
+                  <span className='-ml-2 text-destructive'>*</span>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Assign a category to organize your post</p>
+                      <p>
+                        Determines if the post should be displayed in API
+                        response or not
+                      </p>
                     </TooltipContent>
                   </Tooltip>
-                </label>
+                </span>
                 <Controller
                   control={control}
-                  name='categorySlug'
+                  name='visible'
                   render={({ field }) => (
-                    <CategorySelect
-                      value={field.value ?? null}
-                      onChange={(categorySlug) => {
-                        field.onChange(categorySlug || undefined);
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
                         syncToParent();
                       }}
-                      placeholder='Select category...'
-                      allowCreate
                     />
                   )}
                 />
               </div>
 
-              {/* Tags */}
-              <div className='mt-3 space-y-1'>
-                <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
-                  <span>Tags</span>
+              <div className='flex items-center justify-between'>
+                <span className='flex items-center gap-2 text-sm font-medium'>
+                  <span>Status</span>
+                  <span className='-ml-2 text-destructive'>*</span>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Add tags to help categorize and find your post</p>
+                      <p>Set the post status as draft or published</p>
                     </TooltipContent>
                   </Tooltip>
-                </label>
+                </span>
                 <Controller
                   control={control}
-                  name='tagSlugs'
+                  name='status'
                   render={({ field }) => (
-                    <TagMultiSelect
-                      value={field.value || []}
-                      onChange={(tagSlugs) => {
-                        field.onChange(tagSlugs);
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value as 'draft' | 'published');
                         syncToParent();
                       }}
-                      placeholder='Select some tags'
-                      allowCreate
-                    />
+                    >
+                      <SelectTrigger className='h-8 w-28'>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='draft'>Draft</SelectItem>
+                        <SelectItem value='published'>Published</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 />
               </div>
 
-              {/* Published at */}
-              <div className='mt-4 flex items-center justify-between'>
-                <span className='flex items-center gap-2 text-base font-medium text-muted-foreground'>
+              <div className='flex items-center justify-between'>
+                <span className='flex items-center gap-2 text-sm font-medium'>
                   <span>Published at</span>
                   <span className='-ml-2 text-destructive'>*</span>
                   <Tooltip>
@@ -794,43 +831,6 @@ export function EditorSidebar() {
                   {errors.publishedAt.message}
                 </p>
               )}
-
-              {/* Status row with dropdown on the side */}
-              <div className='mt-4 flex items-center justify-between'>
-                <span className='flex items-center gap-2 text-base font-medium text-muted-foreground'>
-                  <span>Status</span>
-                  <span className='-ml-2 text-destructive'>*</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Set the post status as draft or published</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </span>
-                <Controller
-                  control={control}
-                  name='status'
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => {
-                        field.onChange(value as 'draft' | 'published');
-                        syncToParent();
-                      }}
-                    >
-                      <SelectTrigger className='h-8 w-28'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='draft'>Draft</SelectItem>
-                        <SelectItem value='published'>Published</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
             </div>
           </ScrollArea>
         </TabsContent>
