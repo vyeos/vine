@@ -251,7 +251,7 @@ export default function TagList({
                       <DropdownMenuContent align='end' className='w-40'>
                         <DropdownMenuItem
                           onClick={() => onEditTag(tag)}
-                          className='focus:bg-green-100 data-[highlighted]:bg-green-100 data-[highlighted]:text-green-900'
+                          className='focus:bg-primary/10 data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary'
                         >
                           Edit
                         </DropdownMenuItem>

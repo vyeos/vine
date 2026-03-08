@@ -16,7 +16,7 @@
   --card-foreground: oklch(0.2 0 0);
   --popover: oklch(0.95 0 0);
   --popover-foreground: oklch(0.2 0 0);
-  --primary: oklch(0.55 0.15 152);
+  --primary: oklch(0.62 0.14 55);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.87 0.003 264.5419);
   --secondary-foreground: oklch(0.2 0 0);
@@ -28,7 +28,7 @@
   --destructive-foreground: oklch(1 0 0);
   --border: transparent;
   --input: oklch(0.95 0 0);
-  --ring: oklch(0.55 0.15 152);
+  --ring: oklch(0.62 0.14 55);
   --chart-1: oklch(0.78 0.15 155);
   --chart-2: oklch(0.65 0.14 148);
   --chart-3: oklch(0.48 0.12 145);
@@ -36,12 +36,12 @@
   --chart-5: oklch(0.40 0.10 150);
   --sidebar: oklch(0.95 0.005 0);
   --sidebar-foreground: oklch(0.2 0 0);
-  --sidebar-primary: oklch(0.55 0.15 152);
+  --sidebar-primary: oklch(0.62 0.14 55);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.89 0.003 247.8389);
   --sidebar-accent-foreground: oklch(0.2 0 0);
   --sidebar-border: transparent;
-  --sidebar-ring: oklch(0.55 0.15 152);
+  --sidebar-ring: oklch(0.62 0.14 55);
   --font-sans:
     var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -74,38 +74,38 @@
 }
 
 .dark {
-  --background: oklch(0.2046 0 0);
-  --foreground: oklch(0.9219 0 0);
-  --card: oklch(0.22 0 0);
-  --card-foreground: oklch(0.9219 0 0);
-  --popover: oklch(0.2686 0 0);
-  --popover-foreground: oklch(0.9219 0 0);
-  --primary: oklch(0.55 0.15 152);
-  --primary-foreground: oklch(0.1822 0 0);
-  --secondary: oklch(0.2686 0 0);
-  --secondary-foreground: oklch(0.9219 0 0);
-  --muted: oklch(0.2393 0 0);
-  --muted-foreground: oklch(0.7155 0 0);
-  --accent: oklch(0.3286 0 0);
-  --accent-foreground: oklch(0.9219 0 0);
+  --background: oklch(0.18 0.008 60);
+  --foreground: oklch(0.90 0.01 80);
+  --card: oklch(0.21 0.008 60);
+  --card-foreground: oklch(0.90 0.01 80);
+  --popover: oklch(0.24 0.008 60);
+  --popover-foreground: oklch(0.90 0.01 80);
+  --primary: oklch(0.68 0.14 55);
+  --primary-foreground: oklch(0.16 0.01 55);
+  --secondary: oklch(0.26 0.01 60);
+  --secondary-foreground: oklch(0.90 0.01 80);
+  --muted: oklch(0.24 0.008 60);
+  --muted-foreground: oklch(0.65 0.02 70);
+  --accent: oklch(0.30 0.015 60);
+  --accent-foreground: oklch(0.90 0.01 80);
   --destructive: oklch(0.6368 0.2078 25.3313);
   --destructive-foreground: oklch(1 0 0);
-  --border: transparent;
-  --input: oklch(0.3715 0 0);
-  --ring: oklch(0.75 0.16 155);
-  --chart-1: oklch(0.78 0.15 155);
-  --chart-2: oklch(0.65 0.14 148);
-  --chart-3: oklch(0.48 0.12 145);
-  --chart-4: oklch(0.55 0.13 140);
-  --chart-5: oklch(0.40 0.10 150);
-  --sidebar: oklch(0.1776 0 0);
-  --sidebar-foreground: oklch(0.9219 0 0);
-  --sidebar-primary: oklch(0.55 0.15 152);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.3286 0 0);
-  --sidebar-accent-foreground: oklch(0.9219 0 0);
-  --sidebar-border: transparent;
-  --sidebar-ring: oklch(0.75 0.16 155);
+  --border: oklch(0.30 0.012 60);
+  --input: oklch(0.30 0.012 60);
+  --ring: oklch(0.68 0.14 55);
+  --chart-1: oklch(0.72 0.13 55);
+  --chart-2: oklch(0.62 0.11 50);
+  --chart-3: oklch(0.52 0.10 45);
+  --chart-4: oklch(0.58 0.12 65);
+  --chart-5: oklch(0.45 0.08 55);
+  --sidebar: oklch(0.16 0.008 60);
+  --sidebar-foreground: oklch(0.90 0.01 80);
+  --sidebar-primary: oklch(0.68 0.14 55);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.30 0.015 60);
+  --sidebar-accent-foreground: oklch(0.90 0.01 80);
+  --sidebar-border: oklch(0.30 0.012 60);
+  --sidebar-ring: oklch(0.68 0.14 55);
   --font-sans:
     var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -194,6 +194,16 @@
 @layer base {
   * {
     border-color: var(--border);
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [data-slot="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  [data-slot="button"][aria-disabled="true"] {
+    cursor: not-allowed;
   }
   body {
     background-color: var(--background);
