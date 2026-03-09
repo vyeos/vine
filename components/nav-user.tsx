@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Popover,
@@ -62,11 +62,11 @@ export function NavUser({
 
             <PopoverContent side='top' align='start' className='w-48 p-1'>
               <button
-                onClick={() => router.push('/profile')}
+                onClick={() => router.push('/settings')}
                 className='flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent'
               >
-                <User className='size-4 text-muted-foreground' />
-                Profile
+                <Settings className='size-4 text-muted-foreground' />
+                Settings
               </button>
               <button
                 onClick={() => logoutMutation.mutate(undefined, { onSuccess: () => router.push('/sign-in') })}

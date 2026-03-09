@@ -61,7 +61,7 @@ export function EditProfileForm({ user, onCancel, onSuccess }: EditProfileFormPr
   return (
     <Card className='w-full max-w-xl'>
       <CardHeader>
-        <CardTitle>Edit Profile</CardTitle>
+        <CardTitle>Edit Account</CardTitle>
         <CardDescription>Update your display name. Email stays managed by Google.</CardDescription>
       </CardHeader>
       <CardContent>

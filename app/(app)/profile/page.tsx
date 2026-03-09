@@ -1,5 +1,5 @@
-import { ProfilePage } from '@/components/pages/profile-page';
+import { redirect } from 'next/navigation';
 
 export default function ProfileRoutePage() {
-  return <ProfilePage />;
+  redirect('/settings');
 }

@@ -3,6 +3,27 @@ import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import { requireUserId } from './lib/workspace';
 
+const DEFAULT_PREFERENCES = {
+  defaultWorkspaceSlug: undefined,
+  defaultLandingPage: 'dashboard' as const,
+  emailInvites: true,
+  productUpdates: false,
+  publishAlerts: true,
+  apiUsageAlerts: true,
+};
+
+function getResolvedAvatar(
+  providerAvatar: string | undefined,
+  avatarMode: 'provider' | 'custom',
+  avatarUrl: string | undefined,
+) {
+  if (avatarMode === 'custom' && avatarUrl) {
+    return avatarUrl;
+  }
+
+  return providerAvatar;
+}
+
 export const viewer = query({
   args: {},
   handler: async (ctx) => {
@@ -18,11 +39,130 @@ export const viewer = query({
       return null;
     }
 
+    const profile = await ctx.db
+      .query('userProfiles')
+      .withIndex('by_user_id', (q) => q.eq('userId', userId))
+      .unique();
+    const avatarMode = profile?.avatarMode ?? 'provider';
+    const customAvatarUrl = profile?.avatarUrl;
+
     return {
       id: user._id,
       name: user.name ?? 'Unnamed User',
       email: user.email ?? '',
-      avatar: user.image,
+      avatar: getResolvedAvatar(user.image, avatarMode, customAvatarUrl),
+      providerAvatar: user.image,
+      customAvatarUrl,
+      avatarMode,
+      authProvider: 'google' as const,
+    };
+  },
+});
+
+export const profileOverview = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+
+    if (!userId) {
+      return null;
+    }
+
+    const [user, profile, preferenceRecord, memberships] = await Promise.all([
+      ctx.db.get(userId),
+      ctx.db
+        .query('userProfiles')
+        .withIndex('by_user_id', (q) => q.eq('userId', userId))
+        .unique(),
+      ctx.db
+        .query('userPreferences')
+        .withIndex('by_user_id', (q) => q.eq('userId', userId))
+        .unique(),
+      ctx.db
+        .query('workspaceMembers')
+        .withIndex('by_user_id', (q) => q.eq('userId', userId))
+        .collect(),
+    ]);
+
+    if (!user) {
+      return null;
+    }
+
+    const membershipRecords = (
+      await Promise.all(
+        memberships.map(async (membership) => {
+          const workspace = await ctx.db.get(membership.workspaceId);
+
+          if (!workspace) {
+            return null;
+          }
+
+          return {
+            id: workspace._id,
+            name: workspace.name,
+            slug: workspace.slug,
+            role: membership.role,
+            createdAt: new Date(workspace.createdAt).toISOString(),
+            joinedAt: new Date(membership.joinedAt).toISOString(),
+          };
+        }),
+      )
+    )
+      .filter((record): record is NonNullable<typeof record> => record !== null)
+      .sort((a, b) => {
+        const roleWeight = { owner: 0, admin: 1, member: 2 } as const;
+
+        return (
+          roleWeight[a.role as keyof typeof roleWeight] -
+            roleWeight[b.role as keyof typeof roleWeight] ||
+          a.name.localeCompare(b.name)
+        );
+      });
+
+    const validDefaultWorkspaceSlug = membershipRecords.some(
+      (membership) => membership.slug === preferenceRecord?.defaultWorkspaceSlug,
+    )
+      ? preferenceRecord?.defaultWorkspaceSlug
+      : undefined;
+
+    const avatarMode = profile?.avatarMode ?? 'provider';
+    const customAvatarUrl = profile?.avatarUrl;
+
+    return {
+      user: {
+        id: user._id,
+        name: user.name ?? 'Unnamed User',
+        email: user.email ?? '',
+        avatar: getResolvedAvatar(user.image, avatarMode, customAvatarUrl),
+        providerAvatar: user.image,
+        customAvatarUrl,
+        avatarMode,
+        authProvider: 'google' as const,
+      },
+      summary: {
+        memberSince: new Date(user._creationTime).toISOString(),
+        workspaceCount: membershipRecords.length,
+        ownerWorkspaceCount: membershipRecords.filter((membership) => membership.role === 'owner')
+          .length,
+        adminWorkspaceCount: membershipRecords.filter((membership) => membership.role === 'admin')
+          .length,
+        memberWorkspaceCount: membershipRecords.filter((membership) => membership.role === 'member')
+          .length,
+      },
+      preferences: {
+        ...DEFAULT_PREFERENCES,
+        ...(preferenceRecord
+          ? {
+              defaultWorkspaceSlug: validDefaultWorkspaceSlug,
+              defaultLandingPage: preferenceRecord.defaultLandingPage,
+              emailInvites: preferenceRecord.emailInvites,
+              productUpdates: preferenceRecord.productUpdates,
+              publishAlerts: preferenceRecord.publishAlerts,
+              apiUsageAlerts: preferenceRecord.apiUsageAlerts,
+            }
+          : {}),
+      },
+      memberships: membershipRecords,
     };
   },
 });
@@ -43,6 +183,149 @@ export const updateDisplayName = mutation({
     await ctx.db.patch(userId, {
       name: trimmedName,
     });
+
+    return { success: true };
+  },
+});
+
+export const updateAvatar = mutation({
+  args: {
+    avatarMode: v.union(v.literal('provider'), v.literal('custom')),
+    avatarUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const now = Date.now();
+    const existing = await ctx.db
+      .query('userProfiles')
+      .withIndex('by_user_id', (q) => q.eq('userId', userId))
+      .unique();
+
+    let avatarUrl: string | undefined;
+
+    if (args.avatarMode === 'custom') {
+      const trimmedUrl = args.avatarUrl?.trim() ?? '';
+
+      if (!trimmedUrl) {
+        throw new Error('A custom avatar URL is required');
+      }
+
+      let parsedUrl: URL;
+
+      try {
+        parsedUrl = new URL(trimmedUrl);
+      } catch {
+        throw new Error('Enter a valid avatar URL');
+      }
+
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('Avatar URL must start with http:// or https://');
+      }
+
+      avatarUrl = parsedUrl.toString();
+    }
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        avatarMode: args.avatarMode,
+        avatarUrl,
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.insert('userProfiles', {
+        userId,
+        avatarMode: args.avatarMode,
+        avatarUrl,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+export const updatePreferences = mutation({
+  args: {
+    defaultWorkspaceSlug: v.optional(v.string()),
+    defaultLandingPage: v.union(
+      v.literal('dashboard'),
+      v.literal('posts'),
+      v.literal('media'),
+      v.literal('keys'),
+    ),
+    emailInvites: v.boolean(),
+    productUpdates: v.boolean(),
+    publishAlerts: v.boolean(),
+    apiUsageAlerts: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+
+    if (args.defaultWorkspaceSlug) {
+      const defaultWorkspaceSlug = args.defaultWorkspaceSlug;
+      const workspace = await ctx.db
+        .query('workspaces')
+        .withIndex('by_slug', (q) => q.eq('slug', defaultWorkspaceSlug))
+        .unique();
+
+      if (!workspace) {
+        throw new Error('Selected workspace was not found');
+      }
+
+      const membership = await ctx.db
+        .query('workspaceMembers')
+        .withIndex('by_workspace_id_and_user_id', (q) =>
+          q.eq('workspaceId', workspace._id).eq('userId', userId),
+        )
+        .unique();
+
+      if (!membership) {
+        throw new Error('You can only set one of your own workspaces as default');
+      }
+    }
+
+    const now = Date.now();
+    const existing = await ctx.db
+      .query('userPreferences')
+      .withIndex('by_user_id', (q) => q.eq('userId', userId))
+      .unique();
+
+    const payload = {
+      defaultWorkspaceSlug: args.defaultWorkspaceSlug,
+      defaultLandingPage: args.defaultLandingPage,
+      emailInvites: args.emailInvites,
+      productUpdates: args.productUpdates,
+      publishAlerts: args.publishAlerts,
+      apiUsageAlerts: args.apiUsageAlerts,
+      updatedAt: now,
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, payload);
+    } else {
+      await ctx.db.insert('userPreferences', {
+        userId,
+        ...payload,
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+export const resetPreferences = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const existing = await ctx.db
+      .query('userPreferences')
+      .withIndex('by_user_id', (q) => q.eq('userId', userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
 
     return { success: true };
   },

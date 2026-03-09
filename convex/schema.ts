@@ -4,6 +4,28 @@ import { v } from 'convex/values';
 
 export default defineSchema({
   ...authTables,
+  userProfiles: defineTable({
+    userId: v.id('users'),
+    avatarMode: v.union(v.literal('provider'), v.literal('custom')),
+    avatarUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_user_id', ['userId']),
+  userPreferences: defineTable({
+    userId: v.id('users'),
+    defaultWorkspaceSlug: v.optional(v.string()),
+    defaultLandingPage: v.union(
+      v.literal('dashboard'),
+      v.literal('posts'),
+      v.literal('media'),
+      v.literal('keys'),
+    ),
+    emailInvites: v.boolean(),
+    productUpdates: v.boolean(),
+    publishAlerts: v.boolean(),
+    apiUsageAlerts: v.boolean(),
+    updatedAt: v.number(),
+  }).index('by_user_id', ['userId']),
   workspaces: defineTable({
     name: v.string(),
     slug: v.string(),
