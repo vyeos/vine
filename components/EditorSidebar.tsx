@@ -48,7 +48,6 @@ import { clearWorkspacePersistence } from '@/components/editor/persistence';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
-import { useQueryParam } from '@/lib/query-params';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   postMetadataSchema,
@@ -435,12 +434,12 @@ export function EditorSidebar() {
     };
   }, [hasChanges, hasUnsavedChangesRef]);
 
-  const [activeTab, setActiveTab] = useQueryParam('tab', 'metadata');
+  const [activeTab, setActiveTab] = useState<'metadata' | 'analysis'>('metadata');
   const [editorText, setEditorText] = React.useState('');
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
+    setActiveTab(value as 'metadata' | 'analysis');
   };
 
   // Update analysis when editor content changes
