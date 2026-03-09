@@ -28,6 +28,8 @@ const pageTitles: Record<string, string> = {
   keys: 'API Keys',
 };
 
+const APP_SIDEBAR_COOKIE_NAME = 'app_sidebar_state_v2';
+
 function getPageTitle(pathname: string, workspaceSlug: string): string {
   const prefix = `/${workspaceSlug}/`;
   if (!pathname.startsWith(prefix)) return '';
@@ -68,7 +70,7 @@ function StandardDashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider storageKey={APP_SIDEBAR_COOKIE_NAME}>
       <AppSidebar />
       <SidebarInset className='flex h-screen flex-col overflow-hidden'>
         <header className='flex h-16 shrink-0 items-center gap-2'>
