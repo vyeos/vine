@@ -62,7 +62,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { Sparkles } from 'lucide-react';
+import { estimateReadingTime, getTextStatistics } from '@/lib/reading-time';
 
 export function EditorSidebar() {
   const {
@@ -436,6 +436,7 @@ export function EditorSidebar() {
 
   const [activeTab, setActiveTab] = useState<'metadata' | 'analysis'>('metadata');
   const [editorText, setEditorText] = React.useState('');
+  const [editorHtml, setEditorHtml] = React.useState('');
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   const handleTabChange = (value: string) => {
@@ -448,10 +449,12 @@ export function EditorSidebar() {
 
     const handleUpdate = () => {
       setEditorText(editor.getText());
+      setEditorHtml(editor.getHTML());
     };
 
     // Set initial text
     setEditorText(editor.getText());
+    setEditorHtml(editor.getHTML());
 
     editor.on('update', handleUpdate);
     return () => {
@@ -461,7 +464,7 @@ export function EditorSidebar() {
 
   // Calculate analysis stats
   const analysisStats = useMemo(() => {
-    if (!editor || !editorText) {
+    if (!editor || !editorText.trim()) {
       return {
         wordCount: 0,
         sentenceCount: 0,
@@ -470,38 +473,19 @@ export function EditorSidebar() {
       };
     }
 
-    const trimmedText = editorText.trim();
-    if (!trimmedText) {
-      return {
-        wordCount: 0,
-        sentenceCount: 0,
-        wordsPerSentence: 0,
-        readingTime: 0,
-      };
-    }
-
-    // Count words (split by whitespace and filter empty strings)
-    const words = trimmedText.split(/\s+/).filter((word) => word.length > 0);
-    const wordCount = words.length;
-
-    // Count sentences (split by sentence-ending punctuation)
-    const sentences = trimmedText
-      .split(/[.!?]+/)
-      .filter((s) => s.trim().length > 0);
-    const sentenceCount = sentences.length || 0;
-    const wordsPerSentence =
-      sentenceCount > 0 ? Math.round(wordCount / sentenceCount) : 0;
-
-    // Reading time: average 225 words per minute
-    const readingTime = Math.ceil(wordCount / 225) || 0;
+    const textStats = getTextStatistics(editorText);
+    const readingTime = estimateReadingTime({
+      text: editorText,
+      html: editorHtml,
+    }).minutes;
 
     return {
-      wordCount,
-      sentenceCount,
-      wordsPerSentence,
+      wordCount: textStats.wordCount,
+      sentenceCount: textStats.sentenceCount,
+      wordsPerSentence: textStats.wordsPerSentence,
       readingTime,
     };
-  }, [editor, editorText]);
+  }, [editor, editorHtml, editorText]);
 
   return (
     <Tabs
@@ -865,31 +849,13 @@ export function EditorSidebar() {
                   </div>
                   <div className='space-y-1'>
                     <div className='text-sm text-muted-foreground'>
-                      Reading Time
+                      Estimated Reading Time
                     </div>
                     <div className='text-lg font-semibold text-foreground'>
                       {analysisStats.readingTime}{' '}
                       {analysisStats.readingTime === 1 ? 'minute' : 'minutes'}
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className='space-y-4'>
-                <Separator className='bg-foreground/10' />
-                <div className='space-y-2'>
-                  <div className='flex items-center gap-2'>
-                    <Sparkles className='h-4 w-4 text-primary' />
-                    <h3 className='text-base font-semibold text-foreground'>
-                      AI Analysis
-                    </h3>
-                  </div>
-                  <p className='text-xs text-muted-foreground'>Coming soon</p>
-                  <p className='text-sm text-muted-foreground'>
-                    Get AI-powered insights for readability, SEO optimization,
-                    and content structure to enhance your post before
-                    publishing.
-                  </p>
                 </div>
               </div>
             </div>

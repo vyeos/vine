@@ -129,6 +129,7 @@ The currently implemented public API is:
 The API key is part of the path and identifies the workspace for public reads.
 
 Only posts that are both `published` and `visible` are returned.
+Post payloads also include `readingTimeMinutes`, estimated from text plus rich-content signals like images and code blocks.
 
 ## Notes
 

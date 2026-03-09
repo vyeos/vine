@@ -35,6 +35,7 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
       "title": "Welcome to Vine",
       "slug": "welcome-to-vine",
       "excerpt": "A short introduction to the workspace.",
+      "readingTimeMinutes": 2,
       "publishedAt": "2026-03-08T10:00:00.000Z",
       "updatedAt": "2026-03-08T10:00:00.000Z",
       "author": { "id": "author_id", "name": "Ava Stone" },
@@ -80,6 +81,7 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts/welcome-to-vine"
     "title": "Welcome to Vine",
     "slug": "welcome-to-vine",
     "excerpt": "A short introduction to the workspace.",
+    "readingTimeMinutes": 2,
     "publishedAt": "2026-03-08T10:00:00.000Z",
     "updatedAt": "2026-03-08T10:00:00.000Z",
     "author": { "id": "author_id", "name": "Ava Stone" },
@@ -90,6 +92,18 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts/welcome-to-vine"
   }
 }
 ```
+
+## Reading Time
+
+Every post summary and full post now includes `readingTimeMinutes`.
+
+The estimate is based on:
+
+- text at roughly `225` words per minute
+- extra time for images
+- extra time for code blocks
+
+So it is more realistic than a simple `wordCount / 225` estimate, especially for rich posts.
 
 ## Visibility Rules
 

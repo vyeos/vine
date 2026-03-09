@@ -13,6 +13,7 @@ type PublicPostsResponse = {
     title: string;
     slug: string;
     excerpt: string;
+    readingTimeMinutes: number;
     publishedAt: string | null;
     updatedAt: string;
     author: { id: string; name: string } | null;
@@ -32,6 +33,7 @@ type PublicPostResponse = {
     title: string;
     slug: string;
     excerpt: string;
+    readingTimeMinutes: number;
     publishedAt: string | null;
     updatedAt: string;
     author: { id: string; name: string } | null;

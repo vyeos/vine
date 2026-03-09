@@ -2,6 +2,7 @@
 
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { estimateReadingTime } from '../lib/reading-time';
 
 async function sha256(input: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
@@ -49,7 +50,7 @@ async function getPublicPostBySlug(ctx: any, workspaceId: string, postSlug: stri
 }
 
 async function getPublicPostListItem(ctx: any, post: any) {
-  const [author, category, postTags] = await Promise.all([
+  const [author, category, postTags, body] = await Promise.all([
     post.authorId ? ctx.db.get(post.authorId) : Promise.resolve(null),
     post.categorySlug
       ? ctx.db
@@ -63,6 +64,10 @@ async function getPublicPostListItem(ctx: any, post: any) {
       .query('postTags')
       .withIndex('by_post_id', (q: any) => q.eq('postId', post._id))
       .collect(),
+    ctx.db
+      .query('postBodies')
+      .withIndex('by_post_id', (q: any) => q.eq('postId', post._id))
+      .unique(),
   ]);
 
   const tags = await Promise.all(
@@ -88,6 +93,10 @@ async function getPublicPostListItem(ctx: any, post: any) {
     title: post.title,
     slug: post.slug,
     excerpt: post.excerpt,
+    readingTimeMinutes: estimateReadingTime({
+      html: body?.contentHtml ?? '',
+      text: post.excerpt,
+    }).minutes,
     publishedAt: post.publishedAt ? new Date(post.publishedAt).toISOString() : null,
     updatedAt: new Date(post.updatedAt).toISOString(),
     author: author
@@ -117,6 +126,10 @@ async function getPublicPostDetail(ctx: any, post: any) {
 
   return {
     ...listItem,
+    readingTimeMinutes: estimateReadingTime({
+      html: body?.contentHtml ?? '',
+      text: post.excerpt,
+    }).minutes,
     contentHtml: body?.contentHtml ?? '',
     contentJson: body?.contentJson ?? null,
   };

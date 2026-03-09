@@ -11,6 +11,7 @@ type PostSummary = {
   title: string;
   slug: string;
   excerpt: string;
+  readingTimeMinutes: number;
   publishedAt: string | null;
   updatedAt: string;
   author: { id: string; name: string } | null;
@@ -155,3 +156,4 @@ type StatsResponse = {
 
 - Current error responses use `error`, not `message`, for route-level failures.
 - These shapes match the endpoints currently implemented in `v1`.
+- `readingTimeMinutes` is an estimated read duration that accounts for text, images, and code blocks.
