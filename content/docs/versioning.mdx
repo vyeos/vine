@@ -1,17 +1,29 @@
 ---
 title: API Versioning
-description: Current version path for the implemented public API
+description: Understanding Vine Public API versions and the current contract
 ---
+
+## Overview
+
+The Vine public content API is versioned so future breaking changes can ship without silently changing existing integrations.
 
 ## Current Version
 
-The currently implemented public API lives under:
+`v1` is the current stable version.
+
+All public content endpoints live under:
 
 ```text
-/api/public/v1
+https://vinecms.tech/api/public/v1
 ```
 
-Example:
+## URL Format
+
+```text
+https://vinecms.tech/api/public/{VERSION}/{API_KEY}/{ENDPOINT}
+```
+
+### Example
 
 ```bash
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
@@ -19,7 +31,7 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 
 ## Current Contract
 
-Today, the documented `v1` contract includes:
+The currently shipped `v1` endpoints are:
 
 - `GET /api/public/v1/{API_KEY}/posts`
 - `GET /api/public/v1/{API_KEY}/posts/{postSlug}`
@@ -28,8 +40,31 @@ Today, the documented `v1` contract includes:
 - `GET /api/public/v1/{API_KEY}/tags`
 - `GET /api/public/v1/{API_KEY}/stats`
 
-## Important Note
+## Compatibility Rules
 
-Docs that referenced a legacy non-versioned fallback or additional public endpoints were ahead of the implementation. The docs now reflect only the endpoints that are currently available.
+The practical versioning rule for the current product is:
 
-When additional public endpoints are implemented, they should be added to `v1` docs only after the routes exist.
+- additive fields can be introduced in `v1`
+- new endpoints can be introduced in `v1`
+- breaking response or route changes should trigger a new version
+
+Examples of changes that should require a new version:
+
+- removing a field
+- renaming a field
+- changing the route structure
+- changing visibility rules in a breaking way
+- requiring new parameters for existing routes
+
+## Important Notes
+
+- the current shipped API does **not** include a non-versioned fallback route
+- deprecation headers are **not** implemented today
+- only document new endpoints in `v1` after the route exists in production code
+
+## Best Practices
+
+1. Always use the explicit `/v1/` path.
+2. Treat unknown extra fields as additive and safe.
+3. Avoid depending on undocumented fields.
+4. Check [Response Shapes](/docs/response-shapes) when wiring strict types.

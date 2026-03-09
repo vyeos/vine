@@ -1,11 +1,13 @@
 ---
 title: Troubleshooting
-description: Common issues with the current Vine public API
+description: Common issues and solutions when using the Vine Public Content API
 ---
 
-## 401 Invalid API Key
+This guide covers the most common integration problems with the current shipped Vine public API.
 
-Current error:
+## Invalid API Key (401 Unauthorized)
+
+**What you see:**
 
 ```json
 {
@@ -14,27 +16,50 @@ Current error:
 }
 ```
 
-Check:
+**Status Code:** `401 Unauthorized`
 
-1. The API key is in the path.
-2. The API key belongs to an existing workspace.
+**Possible causes:**
 
-Correct example:
+- the API key is incorrect
+- the API key was deleted or revoked
+- the key was copied with extra spaces
+
+**Solutions:**
+
+1. Verify that you copied the exact API key from Vine.
+2. Make sure the key is in the path, not in a header.
+3. Remove any leading or trailing spaces.
+
+**Example:**
 
 ```bash
+# Wrong
+curl "https://vinecms.tech/api/public/v1/posts"
+
+# Correct
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 ```
 
-Wrong examples:
+## Missing API Key (401 Unauthorized)
 
-```bash
-curl "https://vinecms.tech/api/public/v1/posts"
-curl "https://vinecms.tech/api/public/v1/{API_KEY_MISSING_RESOURCE}"
+**What you see:**
+
+```json
+{
+  "ok": false,
+  "error": "Missing API key"
+}
 ```
 
-## 404 Post Not Found
+**Status Code:** `401 Unauthorized`
 
-Current error:
+**Cause:**
+
+- the route is missing the `:apiKey` segment
+
+## Post Not Found (404 Not Found)
+
+**What you see:**
 
 ```json
 {
@@ -43,13 +68,21 @@ Current error:
 }
 ```
 
-This can mean:
+**Status Code:** `404 Not Found`
+
+**Possible causes:**
 
 - the slug is wrong
-- the post is not `published`
-- the post is not `visible`
+- the post is still a draft
+- the post is hidden
+- the post was deleted
 
-Try listing posts first:
+**Solutions:**
+
+1. Verify the slug in Vine.
+2. Make sure the post is `published`.
+3. Make sure the post is `visible`.
+4. Use the list endpoint first to confirm the slug.
 
 ```bash
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
@@ -57,58 +90,77 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 
 ## Empty Post List
 
-If you get:
+**What you see:**
 
 ```json
 {
   "ok": true,
-  "workspace": {
-    "id": "workspace_id",
-    "name": "Vyeos",
-    "slug": "vyeos"
-  },
   "posts": []
 }
 ```
 
-check whether the workspace has posts that are both:
+**Possible causes:**
 
-- `published`
-- `visible`
+- there are no posts in the workspace
+- all posts are drafts
+- all posts are hidden
 
-Drafts and hidden posts are excluded.
+**Current rule:**
 
-## Route Shape
+Only posts with:
 
-The current route shape is:
+- `status = "published"`
+- `visible = true`
+
+are returned.
+
+## Wrong Route Shape
+
+The current route format is:
 
 ```text
 /api/public/v1/{API_KEY}/posts
 ```
 
-If you are calling older shapes, update them.
+If you are calling an older route format, update it.
 
-## Other Endpoints
+## Expecting Pagination Or Filters
 
-These endpoints are now available:
+The current shipped API does not yet support:
 
-- `/authors`
-- `/categories`
-- `/tags`
-- `/stats`
+- `limit`
+- `offset`
+- category filtering
+- tag filtering
+- author filtering
+- search
 
-Example checks:
+If you used older docs that mentioned those features, those docs were ahead of the implementation.
+
+## Health Checks
+
+Use these routes to verify that the service itself is up:
 
 ```bash
-curl "https://vinecms.tech/api/public/v1/{API_KEY}/authors"
-curl "https://vinecms.tech/api/public/v1/{API_KEY}/categories"
-curl "https://vinecms.tech/api/public/v1/{API_KEY}/tags"
-curl "https://vinecms.tech/api/public/v1/{API_KEY}/stats"
+curl "https://vinecms.tech/api/health"
+curl "https://vinecms.tech/api/public/v1/status"
 ```
 
-## Current Limitations
+## Response Shape Mismatch
 
-These are still not implemented yet:
+If your integration expects older `data` envelopes such as:
 
-- pagination params
-- filtering params
+```json
+{
+  "data": []
+}
+```
+
+update it to the current Vine response format:
+
+```json
+{
+  "ok": true,
+  "posts": []
+}
+```

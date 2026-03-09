@@ -1,46 +1,31 @@
 ---
 title: Workspace Stats
-description: Retrieve top-level workspace counts from your Vine workspace
+description: Get statistics about your Vine workspace
 ---
 
-The Workspace Stats API returns summary counts for the workspace connected to your API key.
+The Stats API returns aggregate counts for the workspace attached to the API key. Use it for dashboards, landing page counters, public workspace summaries, or lightweight analytics displays.
 
-## Fetch Workspace Stats
-
-Retrieve summary totals for public posts, authors, categories, and tags.
-
-### Link
+## Endpoint
 
 ```text
-https://vinecms.tech/api/public/v1/{API_KEY}/stats
-```
-
-### Endpoint
-
-```text
-GET /api/public/v1/{API_KEY}/stats
+GET https://vinecms.tech/api/public/v1/{API_KEY}/stats
 ```
 
 ### Query Parameters
 
 None right now.
 
-### Example Request
+## Example Request
 
 ```bash
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/stats"
 ```
 
-### Example Response
+## Example Response
 
 ```json
 {
   "ok": true,
-  "workspace": {
-    "id": "workspace_id",
-    "name": "Vyeos",
-    "slug": "vyeos"
-  },
   "stats": {
     "totalPosts": 12,
     "totalAuthors": 3,
@@ -50,13 +35,36 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/stats"
 }
 ```
 
-### Notes
+## Response Fields
 
-- `totalPosts` currently counts only posts that are both `published` and `visible`
-- the other totals count all authors, categories, and tags in the workspace
+The `stats` object contains:
 
-### Use Cases
+- `totalPosts` (number): number of posts that are both `published` and `visible`
+- `totalAuthors` (number): number of authors in the workspace
+- `totalCategories` (number): number of categories in the workspace
+- `totalTags` (number): number of tags in the workspace
 
-- public workspace summary cards
-- marketing site counters
-- external dashboards
+## Use Cases
+
+- **Dashboard Counters**: Display workspace metrics on a dashboard
+- **Landing Page Stats**: Show impressive numbers on a marketing page
+- **Workspace Overview**: Provide a quick summary of content volume
+- **Analytics**: Track content growth over time
+
+## Example Usage
+
+```js
+const response = await fetch(
+  'https://vinecms.tech/api/public/v1/{API_KEY}/stats'
+);
+const data = await response.json();
+
+console.log(data.stats.totalPosts);
+```
+
+## Related Endpoints
+
+- [Posts](/docs/posts)
+- [Authors](/docs/authors)
+- [Categories](/docs/categories)
+- [Tags](/docs/tags)

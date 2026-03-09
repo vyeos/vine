@@ -1,11 +1,13 @@
 ---
 title: Posts
-description: Browse and fetch posts from the current Vine public API
+description: Browse and fetch individual posts from your Vine workspace
 ---
 
-The current public API exposes two post endpoints.
+The Posts API lets you retrieve a list of public posts and fetch the full content of a single post. It is intended for websites, blogs, landing pages, newsletters, and other read-only consumers.
 
-## List Posts
+## Browse All Posts
+
+Retrieve all public posts for the workspace attached to the API key.
 
 ### Endpoint
 
@@ -13,22 +15,29 @@ The current public API exposes two post endpoints.
 GET https://vinecms.tech/api/public/v1/{API_KEY}/posts
 ```
 
-### Example
+### Query Parameters
+
+None right now.
+
+The current shipped API does not yet support:
+
+- pagination
+- category filtering
+- tag filtering
+- author filtering
+- search
+
+### Example Request
 
 ```bash
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 ```
 
-### Response
+### Example Response
 
 ```json
 {
   "ok": true,
-  "workspace": {
-    "id": "workspace_id",
-    "name": "Vyeos",
-    "slug": "vyeos"
-  },
   "posts": [
     {
       "id": "post_id",
@@ -46,7 +55,31 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 }
 ```
 
-## Get Post By Slug
+### Response Fields
+
+Each post in the list response contains:
+
+- `id` (string): internal post identifier
+- `title` (string): post title
+- `slug` (string): unique post slug
+- `excerpt` (string): short post summary
+- `readingTimeMinutes` (number): estimated reading time
+- `publishedAt` (string | null): ISO timestamp for publish time
+- `updatedAt` (string): ISO timestamp for last update time
+- `author` (object | null): author summary with `id` and `name`
+- `category` (object | null): category summary with `slug` and `name`
+- `tags` (array): tag summaries with `slug` and `name`
+
+### Use Cases
+
+- Display a blog post listing page
+- Show recent posts on a homepage
+- Filter posts by category or tags
+- Implement pagination for large post collections
+
+## Fetch A Single Post
+
+Retrieve the full content for one post by slug.
 
 ### Endpoint
 
@@ -56,26 +89,21 @@ GET https://vinecms.tech/api/public/v1/{API_KEY}/posts/{postSlug}
 
 ### Path Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `postSlug` | Yes | The post slug |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postSlug` | string | Yes | Slug of the post to retrieve |
 
-### Example
+### Example Request
 
 ```bash
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts/welcome-to-vine"
 ```
 
-### Response
+### Example Response
 
 ```json
 {
   "ok": true,
-  "workspace": {
-    "id": "workspace_id",
-    "name": "Vyeos",
-    "slug": "vyeos"
-  },
   "post": {
     "id": "post_id",
     "title": "Welcome to Vine",
@@ -87,39 +115,85 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts/welcome-to-vine"
     "author": { "id": "author_id", "name": "Ava Stone" },
     "category": { "slug": "announcements", "name": "Announcements" },
     "tags": [{ "slug": "welcome", "name": "Welcome" }],
-    "contentHtml": "<p>Hello world</p>",
-    "contentJson": null
+    "contentHtml": "<p>Hello world</p>"
   }
 }
 ```
 
+### Response Fields
+
+The single post response includes every field from the list response, plus:
+
+- `contentHtml` (string): rendered HTML content
+
+### Error Handling
+
+If the slug is invalid, hidden, or unpublished, the API returns:
+
+```json
+{
+  "ok": false,
+  "error": "Post not found"
+}
+```
+
+### Use Cases
+
+- full article pages
+- blog detail routes
+- newsletter rendering
+- server-side content ingestion
+
 ## Reading Time
 
-Every post summary and full post now includes `readingTimeMinutes`.
+Every post summary and full post includes `readingTimeMinutes`.
 
-The estimate is based on:
+The estimate currently uses:
 
-- text at roughly `225` words per minute
+- text length at roughly `225` words per minute
 - extra time for images
 - extra time for code blocks
 
-So it is more realistic than a simple `wordCount / 225` estimate, especially for rich posts.
+That makes it more realistic than a plain word-count-only estimate.
 
 ## Visibility Rules
 
-These endpoints only return posts that are:
+Posts are returned only when both conditions are true:
 
 - `status = "published"`
 - `visible = true`
 
-Drafts, hidden posts, and missing slugs are not returned.
+Drafts and hidden posts are excluded from public responses.
 
-## Not Implemented Yet
+## Example Usage
 
-The current posts API does not yet support:
+### Fetching Posts In JavaScript
 
-- pagination
-- tag filtering
-- category filtering
-- author filtering
-- search
+```js
+const response = await fetch(
+  'https://vinecms.tech/api/public/v1/{API_KEY}/posts'
+);
+const data = await response.json();
+
+for (const post of data.posts) {
+  console.log(post.title, post.readingTimeMinutes);
+}
+```
+
+### Fetching A Single Post
+
+```js
+const response = await fetch(
+  'https://vinecms.tech/api/public/v1/{API_KEY}/posts/welcome-to-vine'
+);
+const data = await response.json();
+
+console.log(data.post.contentHtml);
+```
+
+## Related Endpoints
+
+- [Authors](/docs/authors)
+- [Categories](/docs/categories)
+- [Tags](/docs/tags)
+- [Workspace Stats](/docs/stats)

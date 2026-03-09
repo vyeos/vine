@@ -1,9 +1,28 @@
 ---
 title: Response Shapes
-description: TypeScript shapes for the currently implemented public API
+description: TypeScript type definitions for all current API responses
 ---
 
-## PostSummary
+This page provides TypeScript reference types for the currently shipped Vine public API.
+
+## Shared Types
+
+### ErrorResponse
+
+All error responses follow this format:
+
+```ts
+type ErrorResponse = {
+  ok: false;
+  error: string;
+};
+```
+
+## Posts
+
+### PostSummary
+
+Used in post lists and includes basic post information.
 
 ```ts
 type PostSummary = {
@@ -20,55 +39,79 @@ type PostSummary = {
 };
 ```
 
-## PostDetail
+### PostDetail
+
+Used when fetching a single post. Includes all fields from PostSummary plus the full HTML content.
 
 ```ts
-type PostDetail = PostSummary & {
-  contentHtml: string;
-  contentJson: unknown;
+type PostDetail = PostSummary & { contentHtml: string };
+```
+
+### PostListResponse
+
+Response shape for post list endpoints.
+
+```ts
+type PostListResponse = {
+  ok: true;
+  posts: PostSummary[];
 };
 ```
 
-## WorkspaceMeta
+### PostDetailResponse
+
+Response shape for post detail (single post) endpoints.
 
 ```ts
-type WorkspaceMeta = {
+type PostDetailResponse = {
+  ok: true;
+  post: PostDetail;
+};
+```
+
+## Tags And Categories
+
+### Category
+
+```ts
+type Category = {
   id: string;
   name: string;
   slug: string;
 };
 ```
 
-## PostListResponse
+### Tag
 
 ```ts
-type PostListResponse = {
+type Tag = {
+  id: string;
+  name: string;
+  slug: string;
+};
+```
+
+### CategoryListResponse
+
+```ts
+type CategoryListResponse = {
   ok: true;
-  workspace: WorkspaceMeta;
-  posts: PostSummary[];
+  categories: Category[];
 };
 ```
 
-## PostDetailResponse
+### TagListResponse
 
 ```ts
-type PostDetailResponse = {
+type TagListResponse = {
   ok: true;
-  workspace: WorkspaceMeta;
-  post: PostDetail;
+  tags: Tag[];
 };
 ```
 
-## ErrorResponse
+## Authors
 
-```ts
-type ErrorResponse = {
-  ok: false;
-  error: string;
-};
-```
-
-## Author
+### Author
 
 ```ts
 type Author = {
@@ -80,28 +123,20 @@ type Author = {
 };
 ```
 
-## Category
+### AuthorListResponse
+
+Response shape for authors endpoint.
 
 ```ts
-type Category = {
-  id: string;
-  name: string;
-  slug: string;
+type AuthorListResponse = {
+  ok: true;
+  authors: Author[];
 };
 ```
 
-## Tag
+## Workspace Stats
 
-```ts
-type Tag = {
-  id: string;
-  name: string;
-  slug: string;
-  createdAt: string;
-};
-```
-
-## Stats
+### Stats
 
 ```ts
 type Stats = {
@@ -112,48 +147,38 @@ type Stats = {
 };
 ```
 
-## AuthorListResponse
-
-```ts
-type AuthorListResponse = {
-  ok: true;
-  workspace: WorkspaceMeta;
-  authors: Author[];
-};
-```
-
-## CategoryListResponse
-
-```ts
-type CategoryListResponse = {
-  ok: true;
-  workspace: WorkspaceMeta;
-  categories: Category[];
-};
-```
-
-## TagListResponse
-
-```ts
-type TagListResponse = {
-  ok: true;
-  workspace: WorkspaceMeta;
-  tags: Tag[];
-};
-```
-
-## StatsResponse
+### StatsResponse
 
 ```ts
 type StatsResponse = {
   ok: true;
-  workspace: WorkspaceMeta;
   stats: Stats;
+};
+```
+
+## Operational Checks
+
+### HealthResponse
+
+```ts
+type HealthResponse = {
+  ok: true;
+  service: 'web';
+  runtime: 'nextjs+elysia';
+};
+```
+
+### StatusResponse
+
+```ts
+type StatusResponse = {
+  ok: true;
+  message: string;
 };
 ```
 
 ## Notes
 
-- Current error responses use `error`, not `message`, for route-level failures.
-- These shapes match the endpoints currently implemented in `v1`.
-- `readingTimeMinutes` is an estimated read duration that accounts for text, images, and code blocks.
+- `readingTimeMinutes` is estimated from text, images, and code blocks
+- route-level failures use `error`, not `message`
+- the current API does not ship pagination or filtering response metadata

@@ -5,44 +5,51 @@ description: Learn how to authenticate and make your first API request
 
 ## Base URL
 
-All API requests are made to the following base URL:
+All public content requests go to:
 
-```
+```text
 https://vinecms.tech/api/public/v1
 ```
 
 ## API Versioning
 
-The Vine Public Content API is versioned. `v1` is the current stable version. The version should be included in the URL path immediately after `/api/public`.
+The current stable public API version is `v1`. Use the explicit versioned route format:
 
-**Supported URL formats:**
-- **Current**: `https://vinecms.tech/api/public/v1/{API_KEY}/posts`
+```text
+https://vinecms.tech/api/public/v1/{API_KEY}/{resource}
+```
 
-Use the explicit `/v1/` format.
+Example:
+
+```text
+https://vinecms.tech/api/public/v1/{API_KEY}/posts
+```
 
 ## Authentication
 
-The Vine Public Content API uses API key authentication. Your API key is included directly in the URL path.
+The Vine public API uses path-based API key authentication.
 
 ### Getting Your API Key
 
-You can obtain your API key from your Vine workspace. The key is read-only and maps directly to your workspace, so keep it private.
+Create or copy an API key from your workspace inside Vine.
 
 ### Using Your API Key
 
-Replace `{API_KEY}` in each endpoint URL with your actual API key. For example:
+Replace `{API_KEY}` with the real key value:
 
 ```bash
 # Before
 https://vinecms.tech/api/public/v1/{API_KEY}/posts
 
-# After (with your actual key)
-https://vinecms.tech/api/public/v1/your-actual-key-here/posts
+# After
+https://vinecms.tech/api/public/v1/your-real-api-key/posts
 ```
 
 ## Making Requests
 
-The public API is configured for simple GET requests. No special headers are required, so you can call it directly from:
+No special headers are required.
+
+You can call the API from:
 
 - **Browser**: Use `fetch()` or `XMLHttpRequest`
 - **cURL**: Use the command line examples provided in each endpoint
@@ -55,32 +62,41 @@ Here's a simple example using cURL:
 ```bash
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 ```
-
-Or using JavaScript in the browser:
+or using JavaScript:
 
 ```js
 const response = await fetch(
   'https://vinecms.tech/api/public/v1/{API_KEY}/posts'
 );
+
+if (!response.ok) {
+  const error = await response.json();
+  throw new Error(error.error || 'Request failed');
+}
+
 const data = await response.json();
-console.log(data);
+console.log(data.posts);
+```
+
+### Example Response
+
+```json
+{
+  "ok": true,
+  "posts": []
+}
 ```
 
 ## Response Format
 
-All successful responses return JSON data. Error responses also use JSON.
+All successful responses return JSON data. Error responses also use JSON with a message field describing the issue.
+
 
 ### Success Response
 
 ```json
 {
   "ok": true,
-  "workspace": {
-    "id": "workspace_id",
-    "name": "Workspace Name",
-    "slug": "workspace-slug"
-  },
-  "posts": []
 }
 ```
 
@@ -93,8 +109,17 @@ All successful responses return JSON data. Error responses also use JSON.
 }
 ```
 
+## Health And Status Checks
+
+Use these endpoints to verify the API surface is live:
+
+```bash
+curl "https://vinecms.tech/api/health"
+curl "https://vinecms.tech/api/public/v1/status"
+```
+
 ## Next Steps
 
-- Learn about [Response Shapes](/docs/response-shapes) to understand the data structure
-- Explore the [Posts API](/docs/posts) to fetch content
-- Check out other endpoints like [Tags](/docs/tags) and [Categories](/docs/categories)
+- Read [Posts](/docs/posts) for content retrieval
+- Read [Response Shapes](/docs/response-shapes) for the exact payloads
+- Read [Troubleshooting](/docs/troubleshooting) for common integration issues

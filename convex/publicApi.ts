@@ -28,14 +28,6 @@ async function validateApiKey(ctx: any, apiKey: string) {
   return { workspace, apiKeyRecord: record };
 }
 
-function toWorkspaceMeta(workspace: any) {
-  return {
-    id: workspace._id,
-    name: workspace.name,
-    slug: workspace.slug,
-  };
-}
-
 function isPublicPost(post: any) {
   return post.visible === true && post.status === 'published';
 }
@@ -131,7 +123,6 @@ async function getPublicPostDetail(ctx: any, post: any) {
       text: post.excerpt,
     }).minutes,
     contentHtml: body?.contentHtml ?? '',
-    contentJson: body?.contentJson ?? null,
   };
 }
 
@@ -154,7 +145,6 @@ export const listPosts = query({
     const items = await Promise.all(publicPosts.map((post) => getPublicPostListItem(ctx, post)));
 
     return {
-      workspace: toWorkspaceMeta(access.workspace),
       posts: items.sort((a, b) => {
         const aDate = a.publishedAt ?? a.updatedAt;
         const bDate = b.publishedAt ?? b.updatedAt;
@@ -178,13 +168,11 @@ export const getPost = query({
     const post = await getPublicPostBySlug(ctx, access.workspace._id, args.postSlug.trim());
     if (!post || !isPublicPost(post)) {
       return {
-        workspace: toWorkspaceMeta(access.workspace),
         post: null,
       };
     }
 
     return {
-      workspace: toWorkspaceMeta(access.workspace),
       post: await getPublicPostDetail(ctx, post),
     };
   },
@@ -206,7 +194,6 @@ export const listAuthors = query({
       .collect();
 
     return {
-      workspace: toWorkspaceMeta(access.workspace),
       authors: authors
         .map((author) => ({
           id: author._id,
@@ -236,7 +223,6 @@ export const listCategories = query({
       .collect();
 
     return {
-      workspace: toWorkspaceMeta(access.workspace),
       categories: categories
         .map((category) => ({
           id: category._id,
@@ -264,13 +250,11 @@ export const listTags = query({
       .collect();
 
     return {
-      workspace: toWorkspaceMeta(access.workspace),
       tags: tags
         .map((tag) => ({
           id: tag._id,
           name: tag.name,
           slug: tag.slug,
-          createdAt: new Date(tag.createdAt).toISOString(),
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     };
@@ -309,7 +293,6 @@ export const getStats = query({
     const publicPosts = posts.filter(isPublicPost);
 
     return {
-      workspace: toWorkspaceMeta(access.workspace),
       stats: {
         totalPosts: publicPosts.length,
         totalAuthors: authors.length,

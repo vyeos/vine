@@ -3,37 +3,46 @@ title: Vine Public Content API
 description: Complete guide to integrating Vine content into your website, landing page, or newsletter
 ---
 
-This handoff guide is meant for people who simply want to pull live Vine content onto a website, landing page, or newsletter. Everything runs against the production host `https://vinecms.tech`, and every request uses your workspace's public API key.
+This guide is for people who want to pull live Vine content into a website, landing page, app, or newsletter. Everything runs against the production host `https://vinecms.tech`, and every request uses a workspace API key directly in the URL path.
 
 ## Quick Start
 
 <Cards>
-  <Card title="Getting Started" href="/docs/getting-started" description="Learn about authentication and base URLs" />
-  <Card title="Posts" href="/docs/posts" description="Browse and fetch individual posts" />
-  <Card title="Tags & Categories" href="/docs/tags" description="Retrieve tags and categories for filtering" />
-  <Card title="Authors" href="/docs/authors" description="Get author information and profiles" />
-  <Card title="Workspace Stats" href="/docs/stats" description="Display workspace statistics" />
-  <Card title="API Versioning" href="/docs/versioning" description="Understand versioning and deprecation policy" />
-  <Card title="Response Shapes" href="/docs/response-shapes" description="TypeScript type definitions" />
+  <Card title="Getting Started" href="/docs/getting-started" description="Authentication, base URLs, and your first request" />
+  <Card title="Posts" href="/docs/posts" description="Browse posts and fetch full post content" />
+  <Card title="Tags & Categories" href="/docs/tags" description="Retrieve taxonomy data for filters and navigation" />
+  <Card title="Authors" href="/docs/authors" description="Get author information and profile metadata" />
+  <Card title="Workspace Stats" href="/docs/stats" description="Display public workspace counts" />
+  <Card title="API Versioning" href="/docs/versioning" description="Current version contract and compatibility notes" />
+  <Card title="Response Shapes" href="/docs/response-shapes" description="TypeScript definitions for all current responses" />
 </Cards>
 
 ## Base URL
 
-All API requests are made to:
+All content API requests are made to:
 
-```
+```text
 https://vinecms.tech/api/public/v1
 ```
 
-> **Note**: The API is versioned. `v1` is the current stable version. Both `/v1/` and the legacy format (without version) are supported for backward compatibility, but using `/v1/` explicitly is recommended.
+Operational checks are also available at:
+
+```text
+https://vinecms.tech/api/health
+https://vinecms.tech/api/public/v1/status
+```
 
 ## Authentication
 
-Replace `{API_KEY}` in each URL with the key provided to you (or you can issue one from your workspace). Keep it private—even though it's read-only, it maps directly to your workspace.
+Replace `{API_KEY}` in each URL with a workspace API key created from the Vine dashboard.
+
+- The API key is read-only
+- The API key already maps to a specific workspace
+- No auth headers are required
 
 ## Headers
 
-None required. The public API is configured for simple GET requests, so you can call it straight from the browser or curl without setting anything special.
+None required. The public API is designed for simple GET requests from browsers, server-side apps, curl, and static site builds.
 
 ## Available Endpoints
 
@@ -44,9 +53,9 @@ None required. The public API is configured for simple GET requests, so you can 
 - `GET /api/public/v1/{API_KEY}/tags`
 - `GET /api/public/v1/{API_KEY}/stats`
 
-## What's Next?
+## What&apos;s Next?
 
-- Start with [Getting Started](/docs/getting-started) to learn about authentication
-- Explore the [Posts API](/docs/posts) to fetch content
-- Check out [Response Shapes](/docs/response-shapes) for TypeScript types
-- Review [Troubleshooting](/docs/troubleshooting) if you encounter issues
+- Start with [Getting Started](/docs/getting-started)
+- Use [Posts](/docs/posts) to build content pages
+- Use [Response Shapes](/docs/response-shapes) for TypeScript integrations
+- Check [Troubleshooting](/docs/troubleshooting) if something fails

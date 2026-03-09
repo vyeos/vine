@@ -3,11 +3,6 @@ import { fetchMutation, fetchQuery } from 'convex/nextjs';
 import { makeFunctionReference } from 'convex/server';
 
 type PublicPostsResponse = {
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
   posts: Array<{
     id: string;
     title: string;
@@ -23,11 +18,6 @@ type PublicPostsResponse = {
 } | null;
 
 type PublicPostResponse = {
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
   post: {
     id: string;
     title: string;
@@ -40,16 +30,10 @@ type PublicPostResponse = {
     category: { slug: string; name: string } | null;
     tags: Array<{ slug: string; name: string }>;
     contentHtml: string;
-    contentJson: unknown;
   } | null;
 } | null;
 
 type PublicAuthorsResponse = {
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
   authors: Array<{
     id: string;
     name: string;
@@ -60,11 +44,6 @@ type PublicAuthorsResponse = {
 } | null;
 
 type PublicCategoriesResponse = {
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
   categories: Array<{
     id: string;
     name: string;
@@ -73,25 +52,14 @@ type PublicCategoriesResponse = {
 } | null;
 
 type PublicTagsResponse = {
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
   tags: Array<{
     id: string;
     name: string;
     slug: string;
-    createdAt: string;
   }>;
 } | null;
 
 type PublicStatsResponse = {
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
   stats: {
     totalPosts: number;
     totalAuthors: number;
@@ -184,7 +152,6 @@ const api = new Elysia({ prefix: '/api' })
 
     return {
       ok: true,
-      workspace: result.workspace,
       posts: result.posts,
     };
   })
@@ -217,7 +184,6 @@ const api = new Elysia({ prefix: '/api' })
 
     return {
       ok: true,
-      workspace: result.workspace,
       post: result.post,
     };
   })
@@ -241,7 +207,6 @@ const api = new Elysia({ prefix: '/api' })
 
     return {
       ok: true,
-      workspace: result.workspace,
       authors: result.authors,
     };
   })
@@ -265,7 +230,6 @@ const api = new Elysia({ prefix: '/api' })
 
     return {
       ok: true,
-      workspace: result.workspace,
       categories: result.categories,
     };
   })
@@ -289,7 +253,6 @@ const api = new Elysia({ prefix: '/api' })
 
     return {
       ok: true,
-      workspace: result.workspace,
       tags: result.tags,
     };
   })
@@ -313,7 +276,6 @@ const api = new Elysia({ prefix: '/api' })
 
     return {
       ok: true,
-      workspace: result.workspace,
       stats: result.stats,
     };
   });
