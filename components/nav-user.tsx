@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { LogOut, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useLogout } from '@/hooks/useAuth';
+import { getWorkspacePath } from '@/lib/utils';
 
 export function NavUser({
   user,
@@ -26,6 +27,8 @@ export function NavUser({
   };
 }) {
   const router = useRouter();
+  const params = useParams<{ workspaceSlug?: string }>();
+  const workspaceSlug = params.workspaceSlug;
   const logoutMutation = useLogout();
 
   const initials = user.name
@@ -62,7 +65,13 @@ export function NavUser({
 
             <PopoverContent side='top' align='start' className='w-48 p-1'>
               <button
-                onClick={() => router.push('/settings')}
+                onClick={() =>
+                  router.push(
+                    workspaceSlug
+                      ? getWorkspacePath(workspaceSlug, 'settings')
+                      : '/workspaces',
+                  )
+                }
                 className='flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent'
               >
                 <Settings className='size-4 text-muted-foreground' />

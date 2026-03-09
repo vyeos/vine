@@ -21,22 +21,31 @@ export function useEditProfile() {
   const mutateRaw = useMutation(api.users.updateDisplayName);
   const [isPending, setIsPending] = useState(false);
 
+  const mutateAsync = async (data: { name?: string; email?: string }) => {
+    setIsPending(true);
+    try {
+      await mutateRaw({ name: (data.name ?? '').trim() });
+      toast.success('Settings updated');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to update settings'));
+      throw error;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
   return {
     isPending,
+    mutateAsync,
     mutate: async (
       data: { name?: string; email?: string },
       options?: { onSuccess?: () => void; onError?: (error: unknown) => void },
     ) => {
-      setIsPending(true);
       try {
-        await mutateRaw({ name: (data.name ?? '').trim() });
-        toast.success('Settings updated');
+        await mutateAsync(data);
         options?.onSuccess?.();
       } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to update settings'));
         options?.onError?.(error);
-      } finally {
-        setIsPending(false);
       }
     },
   };
@@ -46,22 +55,31 @@ export function useUpdateAvatar() {
   const mutateRaw = useMutation(api.users.updateAvatar);
   const [isPending, setIsPending] = useState(false);
 
+  const mutateAsync = async (data: { avatarMode: 'provider' | 'custom'; avatarUrl?: string }) => {
+    setIsPending(true);
+    try {
+      await mutateRaw(data);
+      toast.success('Avatar preferences updated');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to update avatar settings'));
+      throw error;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
   return {
     isPending,
+    mutateAsync,
     mutate: async (
       data: { avatarMode: 'provider' | 'custom'; avatarUrl?: string },
       options?: { onSuccess?: () => void; onError?: (error: unknown) => void },
     ) => {
-      setIsPending(true);
       try {
-        await mutateRaw(data);
-        toast.success('Avatar preferences updated');
+        await mutateAsync(data);
         options?.onSuccess?.();
       } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to update avatar settings'));
         options?.onError?.(error);
-      } finally {
-        setIsPending(false);
       }
     },
   };

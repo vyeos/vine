@@ -3,7 +3,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
   ArrowUpRight,
   BellRing,
   ImageIcon,
@@ -74,7 +73,6 @@ const themeOptions = [
 const settingsSections = [
   { id: 'account-summary', label: 'Account Summary' },
   { id: 'memberships', label: 'Workspace Memberships' },
-  { id: 'avatar', label: 'Avatar Control' },
   { id: 'security', label: 'Security' },
   { id: 'preferences', label: 'Preferences' },
   { id: 'danger-zone', label: 'Danger Zone' },
@@ -165,10 +163,9 @@ export function SettingsPage() {
   const logoutMutation = useLogout();
 
   return (
-    <div className='min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8'>
+    <div className='h-full overflow-y-auto'>
       {isLoading && (
-        <div className='mx-auto grid w-full max-w-6xl gap-6'>
-          <Skeleton className='h-24 w-full rounded-xl' />
+        <div className='mx-auto grid w-full max-w-6xl gap-6 px-1 pb-6'>
           <div className='grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]'>
             <Skeleton className='h-72 w-full rounded-xl' />
             <Skeleton className='h-[720px] w-full rounded-xl' />
@@ -281,24 +278,40 @@ function SettingsHub({
     avatarMode === 'custom' && avatarUrl.trim()
       ? avatarUrl.trim()
       : overview?.user.providerAvatar || user?.avatar;
+  const hasNameChanges = draftName.trim() !== (overview?.user.name ?? user.name);
+  const hasAccountChanges = hasNameChanges || hasAvatarChanges;
+  const isSavingAccount = editProfileMutation.isPending || updateAvatarMutation.isPending;
+
+  const resetAccountDialog = () => {
+    setDraftName(overview?.user.name ?? user.name);
+    setAvatarMode(overview?.user.avatarMode ?? 'provider');
+    setAvatarUrl(overview?.user.customAvatarUrl ?? '');
+    setIsEditDialogOpen(false);
+  };
+
+  const handleSaveAccount = async () => {
+    try {
+      if (hasNameChanges) {
+        await editProfileMutation.mutateAsync({ name: draftName.trim() });
+      }
+
+      if (hasAvatarChanges) {
+        await updateAvatarMutation.mutateAsync({
+          avatarMode,
+          avatarUrl: avatarMode === 'custom' ? avatarUrl.trim() : undefined,
+        });
+      }
+
+      setIsEditDialogOpen(false);
+    } catch {
+      return;
+    }
+  };
 
   return (
-    <div className='mx-auto flex w-full max-w-6xl flex-col gap-6'>
-      <div className='flex flex-wrap items-center justify-between gap-3 border-b pb-4'>
-        <div>
-          <h1 className='text-2xl font-semibold tracking-tight'>Settings</h1>
-          <p className='text-sm text-muted-foreground'>
-            Manage your account, memberships, preferences, and security controls.
-          </p>
-        </div>
-        <Button variant='ghost' className='gap-2' onClick={() => router.back()}>
-          <ArrowLeft className='h-4 w-4' />
-          Back
-        </Button>
-      </div>
-
+    <div className='mx-auto flex w-full max-w-6xl flex-col gap-6 px-1 pb-6'>
       <div className='grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start'>
-        <aside className='lg:sticky lg:top-6'>
+        <aside className='lg:sticky lg:top-0'>
           <Card>
             <CardHeader className='space-y-4'>
               <div className='flex items-center gap-3'>
@@ -308,7 +321,7 @@ function SettingsHub({
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className='min-w-0'>
+                <div className='min-w-0 flex-1'>
                   <CardTitle className='truncate text-base'>
                     {overview?.user.name ?? user.name}
                   </CardTitle>
@@ -430,83 +443,6 @@ function SettingsHub({
                   No workspace memberships were found for this account.
                 </div>
               )}
-            </div>
-          </SettingsSection>
-
-          <SettingsSection
-            id='avatar'
-            title='Avatar Control'
-            description='Use your Google photo or override it with a custom image URL.'
-          >
-            <div className='space-y-4'>
-              <div className='flex items-center gap-4 rounded-lg border bg-card p-4'>
-                <Avatar className='size-16 rounded-lg border'>
-                  <AvatarImage src={previewAvatar} alt={overview?.user.name ?? user.name} />
-                  <AvatarFallback className='rounded-lg bg-primary text-xl font-semibold text-primary-foreground'>
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className='font-medium'>Current avatar</p>
-                  <p className='text-sm text-muted-foreground'>
-                    Source: {avatarMode === 'provider' ? 'Google account' : 'Custom URL'}
-                  </p>
-                </div>
-              </div>
-
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label htmlFor='avatar-mode'>Avatar source</Label>
-                  <Select
-                    value={avatarMode}
-                    onValueChange={(value) => setAvatarMode(value as 'provider' | 'custom')}
-                  >
-                    <SelectTrigger id='avatar-mode' className='w-full'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='provider'>Google avatar</SelectItem>
-                      <SelectItem value='custom'>Custom URL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='avatar-url'>Custom avatar URL</Label>
-                  <Input
-                    id='avatar-url'
-                    value={avatarUrl}
-                    onChange={(event) => setAvatarUrl(event.target.value)}
-                    placeholder='https://example.com/avatar.png'
-                    disabled={avatarMode !== 'custom'}
-                  />
-                </div>
-              </div>
-
-              <div className='flex flex-wrap gap-2'>
-                <Button
-                  onClick={() =>
-                    updateAvatarMutation.mutate({
-                      avatarMode,
-                      avatarUrl: avatarMode === 'custom' ? avatarUrl.trim() : undefined,
-                    })
-                  }
-                  disabled={updateAvatarMutation.isPending || !hasAvatarChanges}
-                >
-                  <ImageIcon className='mr-2 h-4 w-4' />
-                  {updateAvatarMutation.isPending ? 'Saving...' : 'Save avatar'}
-                </Button>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setAvatarMode('provider');
-                    setAvatarUrl('');
-                  }}
-                  disabled={updateAvatarMutation.isPending}
-                >
-                  Use Google avatar
-                </Button>
-              </div>
             </div>
           </SettingsSection>
 
@@ -743,11 +679,25 @@ function SettingsHub({
           <DialogHeader>
             <DialogTitle>Edit Account</DialogTitle>
             <DialogDescription>
-              Update the display name shown across your workspaces.
+              Update your name and avatar settings shown across your workspaces.
             </DialogDescription>
           </DialogHeader>
 
           <div className='space-y-4'>
+            <div className='flex items-center gap-4 rounded-lg border bg-card p-4'>
+              <Avatar className='size-16 rounded-lg border'>
+                <AvatarImage src={previewAvatar} alt={overview?.user.name ?? user.name} />
+                <AvatarFallback className='rounded-lg bg-primary text-xl font-semibold text-primary-foreground'>
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className='min-w-0'>
+                <p className='font-medium'>Avatar preview</p>
+                <p className='truncate text-sm text-muted-foreground'>
+                  {avatarMode === 'provider' ? 'Using your Google avatar' : 'Using a custom avatar URL'}
+                </p>
+              </div>
+            </div>
             <div className='space-y-2'>
               <Label htmlFor='display-name'>Display name</Label>
               <Input
@@ -761,34 +711,51 @@ function SettingsHub({
               <Label htmlFor='profile-email'>Email</Label>
               <Input id='profile-email' value={overview?.user.email ?? user.email} disabled />
             </div>
+            <div className='grid gap-4 sm:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label htmlFor='dialog-avatar-mode'>Avatar source</Label>
+                <Select
+                  value={avatarMode}
+                  onValueChange={(value) => setAvatarMode(value as 'provider' | 'custom')}
+                >
+                  <SelectTrigger id='dialog-avatar-mode' className='w-full'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='provider'>Google avatar</SelectItem>
+                    <SelectItem value='custom'>Custom URL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='dialog-avatar-url'>Custom avatar URL</Label>
+                <Input
+                  id='dialog-avatar-url'
+                  value={avatarUrl}
+                  onChange={(event) => setAvatarUrl(event.target.value)}
+                  placeholder='https://example.com/avatar.png'
+                  disabled={avatarMode !== 'custom'}
+                />
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
             <Button
               variant='outline'
-              onClick={() => {
-                setDraftName(overview?.user.name ?? user.name);
-                setIsEditDialogOpen(false);
-              }}
+              onClick={resetAccountDialog}
             >
               Cancel
             </Button>
             <Button
-              onClick={() =>
-                editProfileMutation.mutate(
-                  { name: draftName.trim() },
-                  {
-                    onSuccess: () => setIsEditDialogOpen(false),
-                  },
-                )
-              }
+              onClick={handleSaveAccount}
               disabled={
-                editProfileMutation.isPending ||
+                isSavingAccount ||
                 draftName.trim().length < 2 ||
-                draftName.trim() === (overview?.user.name ?? user.name)
+                !hasAccountChanges
               }
             >
-              {editProfileMutation.isPending ? 'Saving...' : 'Save changes'}
+              {isSavingAccount ? 'Saving...' : 'Save changes'}
             </Button>
           </DialogFooter>
         </DialogContent>

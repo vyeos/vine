@@ -26,6 +26,7 @@ const pageTitles: Record<string, string> = {
   media: 'Media',
   members: 'Members',
   keys: 'API Keys',
+  settings: 'Settings',
 };
 
 const APP_SIDEBAR_COOKIE_NAME = 'app_sidebar_state_v2';

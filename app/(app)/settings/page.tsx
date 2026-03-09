@@ -1,5 +1,5 @@
-import { SettingsPage } from '@/components/pages/settings-page';
+import { redirect } from 'next/navigation';
 
 export default function SettingsRoutePage() {
-  return <SettingsPage />;
+  redirect('/workspaces');
 }
