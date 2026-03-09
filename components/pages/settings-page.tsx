@@ -17,13 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -71,11 +64,11 @@ const themeOptions = [
 ] as const;
 
 const settingsSections = [
-  { id: 'account-summary', label: 'Account Summary' },
-  { id: 'memberships', label: 'Workspace Memberships' },
+  { id: 'account', label: 'Account' },
+  { id: 'memberships', label: 'Memberships' },
   { id: 'security', label: 'Security' },
   { id: 'preferences', label: 'Preferences' },
-  { id: 'danger-zone', label: 'Danger Zone' },
+  { id: 'account-actions', label: 'Account Actions' },
 ] as const;
 
 function formatDate(value: string) {
@@ -90,21 +83,6 @@ function getRoleBadgeVariant(role: 'owner' | 'admin' | 'member') {
   return 'outline';
 }
 
-function SummaryMetric({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className='rounded-lg border bg-card p-4'>
-      <p className='text-sm text-muted-foreground'>{label}</p>
-      <p className='mt-1 text-2xl font-semibold tracking-tight'>{value}</p>
-    </div>
-  );
-}
-
 function SettingRow({
   icon,
   title,
@@ -117,17 +95,15 @@ function SettingRow({
   action?: ReactNode;
 }) {
   return (
-    <div className='flex items-start justify-between gap-4 rounded-lg border bg-card p-4'>
-      <div className='flex min-w-0 items-start gap-3'>
-        <div className='mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground'>
-          {icon}
-        </div>
+    <div className='flex items-center justify-between gap-4 py-3'>
+      <div className='flex min-w-0 items-center gap-3'>
+        <span className='shrink-0 text-muted-foreground'>{icon}</span>
         <div className='min-w-0'>
-          <p className='font-medium'>{title}</p>
+          <p className='text-sm font-medium'>{title}</p>
           <p className='text-sm text-muted-foreground'>{description}</p>
         </div>
       </div>
-      {action}
+      {action && <div className='shrink-0'>{action}</div>}
     </div>
   );
 }
@@ -137,38 +113,40 @@ function SettingsSection({
   title,
   description,
   children,
+  last,
 }: {
   id: string;
   title: string;
   description: string;
   children: ReactNode;
+  last?: boolean;
 }) {
   return (
-    <section id={id} className='scroll-mt-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>{children}</CardContent>
-      </Card>
+    <section
+      id={id}
+      className={`scroll-mt-6 ${last ? '' : 'border-b border-border pb-6'}`}
+    >
+      <div className='mb-4'>
+        <h2 className='text-sm font-semibold'>{title}</h2>
+        <p className='text-sm text-muted-foreground'>{description}</p>
+      </div>
+      {children}
     </section>
   );
 }
 
 export function SettingsPage() {
-  const router = useRouter();
   const { data: user, isLoading, isError } = useAuth();
   const { data: overview, isLoading: isOverviewLoading } = useProfileOverview();
   const logoutMutation = useLogout();
 
   return (
-    <div className='h-full overflow-y-auto'>
+    <div className='h-full overflow-y-auto scrollbar-hide'>
       {isLoading && (
-        <div className='mx-auto grid w-full max-w-6xl gap-6 px-1 pb-6'>
-          <div className='grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]'>
-            <Skeleton className='h-72 w-full rounded-xl' />
-            <Skeleton className='h-[720px] w-full rounded-xl' />
+        <div className='w-full max-w-4xl px-2 pb-6'>
+          <div className='grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]'>
+            <Skeleton className='h-48 w-full rounded-xl' />
+            <Skeleton className='h-[600px] w-full rounded-xl' />
           </div>
         </div>
       )}
@@ -196,7 +174,6 @@ export function SettingsPage() {
                 })
               : 'settings-hub'
           }
-          router={router}
           user={user}
           overview={overview}
           isOverviewLoading={isOverviewLoading}
@@ -208,18 +185,17 @@ export function SettingsPage() {
 }
 
 function SettingsHub({
-  router,
   user,
   overview,
   isOverviewLoading,
   logoutMutation,
 }: {
-  router: ReturnType<typeof useRouter>;
   user: User;
   overview: ProfileOverviewData | null;
   isOverviewLoading: boolean;
   logoutMutation: ReturnType<typeof useLogout>;
 }) {
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const editProfileMutation = useEditProfile();
   const updateAvatarMutation = useUpdateAvatar();
@@ -309,153 +285,131 @@ function SettingsHub({
   };
 
   return (
-    <div className='mx-auto flex w-full max-w-6xl flex-col gap-6 px-1 pb-6'>
-      <div className='grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start'>
+    <div className='flex w-full max-w-4xl flex-col gap-6 px-2 pb-6'>
+      <div className='grid gap-8 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start'>
+        {/* Sidebar navigation */}
         <aside className='lg:sticky lg:top-0'>
-          <Card>
-            <CardHeader className='space-y-4'>
-              <div className='flex items-center gap-3'>
-                <Avatar className='size-12 rounded-lg border'>
-                  <AvatarImage src={overview?.user.avatar ?? user.avatar} alt={user.name} />
-                  <AvatarFallback className='rounded-lg bg-primary text-base font-semibold text-primary-foreground'>
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className='min-w-0 flex-1'>
-                  <CardTitle className='truncate text-base'>
-                    {overview?.user.name ?? user.name}
-                  </CardTitle>
-                  <CardDescription className='truncate'>
-                    {overview?.user.email ?? user.email}
-                  </CardDescription>
-                </div>
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                <Badge variant='outline'>{overview?.user.authProvider ?? 'google'}</Badge>
-                <Badge variant='outline'>
-                  {overview?.summary.workspaceCount ?? 0} workspaces
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-1'>
-              {settingsSections.map((section) => (
-                <Button key={section.id} asChild variant='ghost' className='w-full justify-start'>
-                  <a href={`#${section.id}`}>{section.label}</a>
-                </Button>
-              ))}
-            </CardContent>
-          </Card>
+          <nav className='flex flex-col gap-0.5'>
+            {settingsSections.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className='rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+              >
+                {section.label}
+              </a>
+            ))}
+          </nav>
         </aside>
 
-        <div className='space-y-6'>
+        {/* Main content */}
+        <div className='flex flex-col gap-6'>
+          {/* Account */}
           <SettingsSection
-            id='account-summary'
-            title='Account Summary'
-            description='Basic account information and your current workspace footprint.'
+            id='account'
+            title='Account'
+            description='Your profile and workspace overview.'
           >
-            <div className='space-y-6'>
-              <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-                <div className='flex items-center gap-4'>
-                  <Avatar className='size-16 rounded-lg border'>
+            <div className='flex flex-col gap-4'>
+              <div className='flex items-center justify-between gap-4'>
+                <div className='flex items-center gap-3'>
+                  <Avatar className='size-10 rounded-lg border'>
                     <AvatarImage src={overview?.user.avatar ?? user.avatar} alt={user.name} />
-                    <AvatarFallback className='rounded-lg bg-primary text-xl font-semibold text-primary-foreground'>
+                    <AvatarFallback className='rounded-lg bg-primary text-sm font-semibold text-primary-foreground'>
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <div className='space-y-1'>
-                    <p className='text-xl font-semibold'>{overview?.user.name ?? user.name}</p>
-                    <p className='flex items-center gap-2 text-sm text-muted-foreground'>
-                      <Mail className='h-4 w-4' />
-                      {overview?.user.email ?? user.email}
-                    </p>
+                  <div className='min-w-0'>
+                    <p className='text-sm font-medium'>{overview?.user.name ?? user.name}</p>
                     <p className='text-sm text-muted-foreground'>
-                      Member since {overview ? formatDate(overview.summary.memberSince) : '...'}
+                      {overview?.user.email ?? user.email}
                     </p>
                   </div>
                 </div>
-                <Button variant='outline' onClick={() => setIsEditDialogOpen(true)}>
-                  <PencilLine className='mr-2 h-4 w-4' />
-                  Edit account
+                <Button variant='outline' size='sm' onClick={() => setIsEditDialogOpen(true)}>
+                  <PencilLine className='mr-1.5 h-3.5 w-3.5' />
+                  Edit
                 </Button>
               </div>
 
-              <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-                <SummaryMetric
-                  label='Total memberships'
-                  value={String(overview?.summary.workspaceCount ?? 0)}
-                />
-                <SummaryMetric
-                  label='Owner roles'
-                  value={String(overview?.summary.ownerWorkspaceCount ?? 0)}
-                />
-                <SummaryMetric
-                  label='Admin roles'
-                  value={String(overview?.summary.adminWorkspaceCount ?? 0)}
-                />
-                <SummaryMetric
-                  label='Member roles'
-                  value={String(overview?.summary.memberWorkspaceCount ?? 0)}
-                />
+              <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground'>
+                <span>
+                  {overview?.summary.workspaceCount ?? 0} workspace{(overview?.summary.workspaceCount ?? 0) !== 1 ? 's' : ''}
+                </span>
+                <span className='text-border'>|</span>
+                <span>{overview?.summary.ownerWorkspaceCount ?? 0} owner</span>
+                <span className='text-border'>|</span>
+                <span>{overview?.summary.adminWorkspaceCount ?? 0} admin</span>
+                <span className='text-border'>|</span>
+                <span>{overview?.summary.memberWorkspaceCount ?? 0} member</span>
+                {overview && (
+                  <>
+                    <span className='text-border'>|</span>
+                    <span>Joined {formatDate(overview.summary.memberSince)}</span>
+                  </>
+                )}
               </div>
             </div>
           </SettingsSection>
 
+          {/* Memberships */}
           <SettingsSection
             id='memberships'
-            title='Workspace Memberships'
-            description='Review the workspaces you belong to and open them directly.'
+            title='Memberships'
+            description='Workspaces you belong to.'
           >
-            <div className='space-y-3'>
+            <div className='flex flex-col gap-2'>
               {isOverviewLoading ? (
                 <>
-                  <Skeleton className='h-20 w-full rounded-lg' />
-                  <Skeleton className='h-20 w-full rounded-lg' />
+                  <Skeleton className='h-14 w-full rounded-lg' />
+                  <Skeleton className='h-14 w-full rounded-lg' />
                 </>
               ) : overview?.memberships.length ? (
                 overview.memberships.map((membership) => (
                   <div
                     key={membership.id}
-                    className='flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between'
+                    className='flex items-center justify-between gap-4 rounded-lg border bg-muted/30 px-4 py-3'
                   >
                     <div className='min-w-0'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <p className='truncate font-medium'>{membership.name}</p>
+                      <div className='flex items-center gap-2'>
+                        <p className='truncate text-sm font-medium'>{membership.name}</p>
                         <Badge variant={getRoleBadgeVariant(membership.role)}>
                           {membership.role}
                         </Badge>
                       </div>
-                      <p className='text-sm text-muted-foreground'>
-                        /{membership.slug} • Joined {formatDate(membership.joinedAt)}
+                      <p className='text-xs text-muted-foreground'>
+                        /{membership.slug} &middot; Joined {formatDate(membership.joinedAt)}
                       </p>
                     </div>
                     <Button
-                      variant='outline'
-                      className='shrink-0'
+                      variant='ghost'
+                      size='sm'
                       onClick={() => router.push(getWorkspacePath(membership.slug, 'dashboard'))}
                     >
-                      Open workspace
-                      <ArrowUpRight className='ml-2 h-4 w-4' />
+                      Open
+                      <ArrowUpRight className='ml-1 h-3.5 w-3.5' />
                     </Button>
                   </div>
                 ))
               ) : (
-                <div className='rounded-lg border border-dashed p-6 text-sm text-muted-foreground'>
-                  No workspace memberships were found for this account.
-                </div>
+                <p className='py-4 text-sm text-muted-foreground'>
+                  No workspace memberships found.
+                </p>
               )}
             </div>
           </SettingsSection>
 
+          {/* Security */}
           <SettingsSection
             id='security'
             title='Security'
-            description='Your current sign-in method and account protection details.'
+            description='Sign-in method and session details.'
           >
-            <div className='space-y-3'>
+            <div className='divide-y divide-border'>
               <SettingRow
                 icon={<ShieldCheck className='h-4 w-4' />}
                 title='Sign-in provider'
-                description='Google is the only active authentication provider for this account.'
+                description='Google OAuth'
                 action={<Badge variant='secondary'>Google</Badge>}
               />
               <SettingRow
@@ -463,37 +417,21 @@ function SettingsHub({
                 title='Primary email'
                 description={overview?.user.email ?? user.email}
               />
-              <SettingRow
-                icon={<RefreshCcw className='h-4 w-4' />}
-                title='Current session'
-                description='You are signed in on this device. Use sign out if you need to end the session.'
-                action={
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() =>
-                      logoutMutation.mutate(undefined, {
-                        onSuccess: () => router.push('/sign-in'),
-                      })
-                    }
-                    disabled={logoutMutation.isPending}
-                  >
-                    {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}
-                  </Button>
-                }
-              />
             </div>
           </SettingsSection>
 
+          {/* Preferences */}
           <SettingsSection
             id='preferences'
             title='Preferences'
-            description='Control your default workspace flow, notifications, and local theme.'
+            description='Defaults, notifications, and appearance.'
           >
-            <div className='space-y-4'>
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label htmlFor='profile-theme'>Theme</Label>
+            <div className='flex flex-col gap-4'>
+              <div className='grid gap-4 sm:grid-cols-3'>
+                <div className='space-y-1.5'>
+                  <Label htmlFor='profile-theme' className='text-xs text-muted-foreground'>
+                    Theme
+                  </Label>
                   <Select value={theme ?? 'system'} onValueChange={setTheme}>
                     <SelectTrigger id='profile-theme' className='w-full'>
                       <SelectValue />
@@ -508,11 +446,13 @@ function SettingsHub({
                   </Select>
                 </div>
 
-                <div className='space-y-2'>
-                  <Label htmlFor='default-workspace'>Default workspace</Label>
+                <div className='space-y-1.5'>
+                  <Label htmlFor='default-workspace' className='text-xs text-muted-foreground'>
+                    Default workspace
+                  </Label>
                   <Select value={defaultWorkspaceSlug} onValueChange={setDefaultWorkspaceSlug}>
                     <SelectTrigger id='default-workspace' className='w-full'>
-                      <SelectValue placeholder='Choose a workspace' />
+                      <SelectValue placeholder='Choose' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value='none'>No preference</SelectItem>
@@ -524,85 +464,88 @@ function SettingsHub({
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className='space-y-1.5'>
+                  <Label htmlFor='default-landing-page' className='text-xs text-muted-foreground'>
+                    Landing page
+                  </Label>
+                  <Select
+                    value={defaultLandingPage}
+                    onValueChange={(value) => setDefaultLandingPage(value as UserLandingPage)}
+                  >
+                    <SelectTrigger id='default-landing-page' className='w-full'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {landingPageOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className='space-y-2'>
-                <Label htmlFor='default-landing-page'>Default landing page</Label>
-                <Select
-                  value={defaultLandingPage}
-                  onValueChange={(value) => setDefaultLandingPage(value as UserLandingPage)}
-                >
-                  <SelectTrigger id='default-landing-page' className='w-full'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {landingPageOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className='space-y-3'>
+              <div className='divide-y divide-border'>
                 <SettingRow
                   icon={<BellRing className='h-4 w-4' />}
                   title='Workspace invite emails'
-                  description='Receive invite-related account emails.'
+                  description='Receive invite-related emails.'
                   action={<Switch checked={emailInvites} onCheckedChange={setEmailInvites} />}
                 />
                 <SettingRow
                   icon={<BellRing className='h-4 w-4' />}
                   title='Product updates'
-                  description='Allow occasional VineCMS product and release updates.'
+                  description='Occasional product and release updates.'
                   action={<Switch checked={productUpdates} onCheckedChange={setProductUpdates} />}
                 />
                 <SettingRow
                   icon={<BellRing className='h-4 w-4' />}
                   title='Publishing alerts'
-                  description='Keep publish-related notifications enabled.'
+                  description='Publish-related notifications.'
                   action={<Switch checked={publishAlerts} onCheckedChange={setPublishAlerts} />}
                 />
                 <SettingRow
                   icon={<BellRing className='h-4 w-4' />}
                   title='API usage alerts'
-                  description='Get notified when your workspace API keys are used.'
+                  description='Notifications when API keys are used.'
                   action={<Switch checked={apiUsageAlerts} onCheckedChange={setApiUsageAlerts} />}
                 />
               </div>
 
-              <div className='flex flex-wrap gap-2'>
-                <Button
-                  onClick={() =>
-                    updatePreferencesMutation.mutate({
-                      defaultWorkspaceSlug:
-                        defaultWorkspaceSlug === 'none' ? undefined : defaultWorkspaceSlug,
-                      defaultLandingPage,
-                      emailInvites,
-                      productUpdates,
-                      publishAlerts,
-                      apiUsageAlerts,
-                    })
-                  }
-                  disabled={updatePreferencesMutation.isPending || !hasPreferenceChanges}
-                >
-                  {updatePreferencesMutation.isPending ? 'Saving...' : 'Save preferences'}
-                </Button>
-              </div>
+              <Button
+                size='sm'
+                onClick={() =>
+                  updatePreferencesMutation.mutate({
+                    defaultWorkspaceSlug:
+                      defaultWorkspaceSlug === 'none' ? undefined : defaultWorkspaceSlug,
+                    defaultLandingPage,
+                    emailInvites,
+                    productUpdates,
+                    publishAlerts,
+                    apiUsageAlerts,
+                  })
+                }
+                disabled={updatePreferencesMutation.isPending || !hasPreferenceChanges}
+              >
+                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save preferences'}
+              </Button>
             </div>
           </SettingsSection>
 
+          {/* Account Actions */}
           <SettingsSection
-            id='danger-zone'
-            title='Danger Zone'
-            description='Revert account-level settings if you want to roll back customization quickly.'
+            id='account-actions'
+            title='Account Actions'
+            description='Reset settings or end your session.'
+            last
           >
-            <div className='space-y-3'>
+            <div className='divide-y divide-border'>
               <SettingRow
                 icon={<RefreshCcw className='h-4 w-4' />}
                 title='Reset preferences'
-                description='Remove your saved workspace and notification preferences and fall back to defaults.'
+                description='Revert workspace and notification preferences to defaults.'
                 action={
                   <Button
                     variant='outline'
@@ -628,7 +571,7 @@ function SettingsHub({
               <SettingRow
                 icon={<ImageIcon className='h-4 w-4' />}
                 title='Clear custom avatar'
-                description='Switch back to your Google profile photo and discard any custom override.'
+                description='Revert to your Google profile photo.'
                 action={
                   <Button
                     variant='outline'
@@ -652,8 +595,8 @@ function SettingsHub({
               />
               <SettingRow
                 icon={<TriangleAlert className='h-4 w-4' />}
-                title='Sign out of this device'
-                description='End the current session if you are stepping away from this browser.'
+                title='Sign out'
+                description='End the current session on this device.'
                 action={
                   <Button
                     variant='destructive'
@@ -674,31 +617,32 @@ function SettingsHub({
         </div>
       </div>
 
+      {/* Edit Account Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className='sm:max-w-md'>
           <DialogHeader>
             <DialogTitle>Edit Account</DialogTitle>
             <DialogDescription>
-              Update your name and avatar settings shown across your workspaces.
+              Update your name and avatar settings.
             </DialogDescription>
           </DialogHeader>
 
           <div className='space-y-4'>
-            <div className='flex items-center gap-4 rounded-lg border bg-card p-4'>
-              <Avatar className='size-16 rounded-lg border'>
+            <div className='flex items-center gap-3'>
+              <Avatar className='size-12 rounded-lg border'>
                 <AvatarImage src={previewAvatar} alt={overview?.user.name ?? user.name} />
-                <AvatarFallback className='rounded-lg bg-primary text-xl font-semibold text-primary-foreground'>
+                <AvatarFallback className='rounded-lg bg-primary text-base font-semibold text-primary-foreground'>
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className='min-w-0'>
-                <p className='font-medium'>Avatar preview</p>
-                <p className='truncate text-sm text-muted-foreground'>
-                  {avatarMode === 'provider' ? 'Using your Google avatar' : 'Using a custom avatar URL'}
+                <p className='text-sm font-medium'>Avatar preview</p>
+                <p className='truncate text-xs text-muted-foreground'>
+                  {avatarMode === 'provider' ? 'Using Google avatar' : 'Custom URL'}
                 </p>
               </div>
             </div>
-            <div className='space-y-2'>
+            <div className='space-y-1.5'>
               <Label htmlFor='display-name'>Display name</Label>
               <Input
                 id='display-name'
@@ -707,12 +651,12 @@ function SettingsHub({
                 placeholder='Your name'
               />
             </div>
-            <div className='space-y-2'>
+            <div className='space-y-1.5'>
               <Label htmlFor='profile-email'>Email</Label>
               <Input id='profile-email' value={overview?.user.email ?? user.email} disabled />
             </div>
             <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
+              <div className='space-y-1.5'>
                 <Label htmlFor='dialog-avatar-mode'>Avatar source</Label>
                 <Select
                   value={avatarMode}
@@ -727,7 +671,7 @@ function SettingsHub({
                   </SelectContent>
                 </Select>
               </div>
-              <div className='space-y-2'>
+              <div className='space-y-1.5'>
                 <Label htmlFor='dialog-avatar-url'>Custom avatar URL</Label>
                 <Input
                   id='dialog-avatar-url'
@@ -741,10 +685,7 @@ function SettingsHub({
           </div>
 
           <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={resetAccountDialog}
-            >
+            <Button variant='outline' onClick={resetAccountDialog}>
               Cancel
             </Button>
             <Button
