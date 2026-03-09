@@ -1,7 +1,7 @@
 'use client';
 
 import type { Tag, CreateTagData } from '@/types/tag';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { slugify } from '@/lib/slug';
 
 interface TagFormProps {
   initialData: Tag | null;
@@ -30,8 +31,7 @@ export default function TagForm({
   isSubmitting,
 }: TagFormProps) {
   const isEditing = !!initialData;
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const slugInputRef = useRef<HTMLInputElement>(null);
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(isEditing);
 
   const formSchema = useMemo(
     () =>
@@ -53,11 +53,12 @@ export default function TagForm({
   );
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors, isDirty },
-    watch,
     setError,
+    setValue,
   } = useForm<CreateTagData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,15 +69,18 @@ export default function TagForm({
 
   const focusFirstError = () => {
     setTimeout(() => {
-      if (errors.name && nameInputRef.current) {
-        nameInputRef.current.focus();
-        nameInputRef.current.scrollIntoView({
+      const nameInput = document.getElementById('name') as HTMLInputElement | null;
+      const slugInput = document.getElementById('slug') as HTMLInputElement | null;
+
+      if (errors.name && nameInput) {
+        nameInput.focus();
+        nameInput.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         });
-      } else if (errors.slug && slugInputRef.current) {
-        slugInputRef.current.focus();
-        slugInputRef.current.scrollIntoView({
+      } else if (errors.slug && slugInput) {
+        slugInput.focus();
+        slugInput.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         });
@@ -84,8 +88,25 @@ export default function TagForm({
     }, 100);
   };
 
-  const nameValue = watch('name');
-  const slugValue = watch('slug');
+  const nameValue = useWatch({ control, name: 'name' });
+  const slugValue = useWatch({ control, name: 'slug' });
+  const slugField = register('slug', {
+    onChange: () => {
+      setIsSlugManuallyEdited(true);
+    },
+  });
+
+  useEffect(() => {
+    if (isEditing || !nameValue || isSlugManuallyEdited) {
+      return;
+    }
+
+    const nextSlug = slugify(nameValue);
+    if (nextSlug) {
+      setValue('slug', nextSlug, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [isEditing, isSlugManuallyEdited, nameValue, setValue]);
+
   const isValid = isEditing
     ? isDirty
     : nameValue &&
@@ -113,8 +134,9 @@ export default function TagForm({
             message,
           });
           setTimeout(() => {
-            slugInputRef.current?.focus();
-            slugInputRef.current?.scrollIntoView({
+            const slugInput = document.getElementById('slug') as HTMLInputElement | null;
+            slugInput?.focus();
+            slugInput?.scrollIntoView({
               behavior: 'smooth',
               block: 'center',
             });
@@ -146,10 +168,6 @@ export default function TagForm({
             <Input
               id='name'
               {...register('name')}
-              ref={(e) => {
-                register('name').ref(e);
-                nameInputRef.current = e;
-              }}
               placeholder="Tag name (e.g., 'JavaScript')"
               required
               className={
@@ -169,11 +187,7 @@ export default function TagForm({
             <Label htmlFor='slug'>Slug</Label>
             <Input
               id='slug'
-              {...register('slug')}
-              ref={(e) => {
-                register('slug').ref(e);
-                slugInputRef.current = e;
-              }}
+              {...slugField}
               placeholder="URL-friendly slug (e.g., 'javascript')"
               required
               className={

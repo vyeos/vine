@@ -1,5 +1,5 @@
 export function generateStructuredData() {
-  const baseUrl = "https://vinecms.online";
+  const baseUrl = "https://vinecms.tech";
 
   return {
     "@context": "https://schema.org",
@@ -35,7 +35,7 @@ export function generateStructuredData() {
 }
 
 export function generateOrganizationData() {
-  const baseUrl = "https://vinecms.online";
+  const baseUrl = "https://vinecms.tech";
 
   return {
     "@context": "https://schema.org",
@@ -53,7 +53,7 @@ export function generateOrganizationData() {
 }
 
 export function generateWebSiteData() {
-  const baseUrl = "https://vinecms.online";
+  const baseUrl = "https://vinecms.tech";
 
   return {
     "@context": "https://schema.org",
@@ -114,10 +114,10 @@ export function generateArticleData(params: {
     publisher: {
       "@type": "Organization",
       name: "Vine",
-      url: "https://vinecms.online",
+      url: "https://vinecms.tech",
       logo: {
         "@type": "ImageObject",
-        url: "https://vinecms.online/og.png",
+        url: "https://vinecms.tech/og.png",
       },
     },
     inLanguage: "en-US",

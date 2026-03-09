@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   },
   description:
     "Write content in one place and fetch it from any frontend with a straightforward API, so your team can focus on what to say instead of how to wire it up.",
-  metadataBase: new URL("https://vinecms.online"),
+  metadataBase: new URL("https://vinecms.tech"),
   openGraph: {
     type: "website",
     siteName: "Vine",
     title: "Vine — A simple CMS for your next project",
     description:
       "Write content in one place and fetch it from any frontend with a straightforward API, so your team can focus on what to say instead of how to wire it up.",
-    url: "https://vinecms.online",
+    url: "https://vinecms.tech",
     images: [
       {
         url: "/og.png",
