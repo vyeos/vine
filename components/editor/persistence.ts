@@ -7,6 +7,7 @@ export type ProseMirrorJSON = {
 
 export const DEFAULT_METADATA_STORAGE_PREFIX = 'vine-editor-metadata';
 export const DEFAULT_CONTENT_STORAGE_PREFIX = 'vine-editor-content';
+export const EDITOR_AUTOSAVE_STORAGE_KEY = 'vine-editor-autosave-enabled';
 
 /**
  * Generates a workspace-specific storage key
@@ -244,4 +245,21 @@ export const clearAllWorkspaceData = () => {
   workspaces.forEach((workspace) => {
     clearWorkspacePersistence(workspace.slug);
   });
+};
+
+export const loadAutosavePreference = () => {
+  try {
+    return localStorage.getItem(EDITOR_AUTOSAVE_STORAGE_KEY) === 'true';
+  } catch (error) {
+    console.error('Failed to load editor autosave preference', error);
+    return false;
+  }
+};
+
+export const saveAutosavePreference = (enabled: boolean) => {
+  try {
+    localStorage.setItem(EDITOR_AUTOSAVE_STORAGE_KEY, String(enabled));
+  } catch (error) {
+    console.error('Failed to save editor autosave preference', error);
+  }
 };

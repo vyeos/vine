@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useEditorContext } from '@/components/editor/editor-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -39,12 +45,17 @@ import TagMultiSelect from '@/components/Tag/TagMultiSelect';
 import CategorySelect from '@/components/Category/CategorySelect';
 import { useCreatePost, useUpdatePost } from '@/hooks/usePost';
 import type { CreatePostData, UpdatePostData } from '@/types/post';
+import type { PostMetadata } from '@/types/editor';
 import {
   getContentFromEditor,
   isEditorEmpty as checkEditorEmpty,
   hasTextContent,
 } from '@/components/editor/content-utils';
-import { clearWorkspacePersistence } from '@/components/editor/persistence';
+import {
+  clearWorkspacePersistence,
+  loadAutosavePreference,
+  saveAutosavePreference,
+} from '@/components/editor/persistence';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -63,6 +74,10 @@ import {
 } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { estimateReadingTime, getTextStatistics } from '@/lib/reading-time';
+import { getErrorMessage } from '@/lib/error-utils';
+
+const AUTOSAVE_DELAY_MS = 1200;
+type AutosaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 
 export function EditorSidebar() {
   const {
@@ -73,6 +88,8 @@ export function EditorSidebar() {
     isEditing,
     postSlug,
     originalContent,
+    setOriginalMetadata,
+    setOriginalContent,
     shouldSkipBlockerRef,
     saveRef,
     hasUnsavedChangesRef,
@@ -117,17 +134,40 @@ export function EditorSidebar() {
   const allValues = watch();
   const slugManuallyEditedRef = React.useRef(false);
   const isSyncingRef = React.useRef(false);
+  const autosaveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const autosavePostSlugRef = React.useRef(postSlug || '');
+  const isAutosavingRef = React.useRef(false);
 
   const [hasContentChanged, setHasContentChanged] = React.useState(false);
+  const [isAutosaveEnabled, setIsAutosaveEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return loadAutosavePreference();
+  });
+  const [autosaveState, setAutosaveState] = useState<AutosaveState>('idle');
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'metadata' | 'analysis'>(
+    'metadata',
+  );
+  const [editorText, setEditorText] = React.useState('');
+  const [editorHtml, setEditorHtml] = React.useState('');
+  const [showClearDialog, setShowClearDialog] = useState(false);
   const initialContentRef = React.useRef<string | null>(null);
   const editor = editorRef.current?.editor;
 
-  const syncToParent = useCallback(() => {
-    isSyncingRef.current = true;
-    const values = getValues();
-    setMetadata({
-      title: values.title || '',
-      slug: values.slug || '',
+  useEffect(() => {
+    if (postSlug) {
+      autosavePostSlugRef.current = postSlug;
+    }
+  }, [postSlug]);
+
+  const buildMetadataSnapshot = useCallback(
+    (values: PostMetadataFormData): PostMetadata => ({
+      title: values.title,
+      slug: values.slug,
       excerpt: values.excerpt || '',
       authorId: values.authorId,
       categorySlug: values.categorySlug,
@@ -135,11 +175,18 @@ export function EditorSidebar() {
       publishedAt: values.publishedAt || new Date(),
       visible: values.visible ?? true,
       status: values.status || 'draft',
-    });
+    }),
+    [],
+  );
+
+  const syncToParent = useCallback(() => {
+    isSyncingRef.current = true;
+    const values = getValues();
+    setMetadata(buildMetadataSnapshot(values));
     setTimeout(() => {
       isSyncingRef.current = false;
     }, 0);
-  }, [getValues, setMetadata]);
+  }, [buildMetadataSnapshot, getValues, setMetadata]);
 
   useEffect(() => {
     if (isSyncingRef.current) return;
@@ -260,56 +307,194 @@ export function EditorSidebar() {
     syncToParent();
   };
 
+  const clearAutosaveTimer = useCallback(() => {
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = null;
+    }
+  }, []);
+
+  const applySavedBaseline = useCallback(
+    (values: PostMetadataFormData, contentJsonSnapshot: string) => {
+      const nextMetadata = buildMetadataSnapshot(values);
+      setMetadata(nextMetadata);
+      setOriginalMetadata(nextMetadata);
+      setOriginalContent(contentJsonSnapshot);
+      reset(values);
+      initialContentRef.current = contentJsonSnapshot;
+      setHasContentChanged(false);
+    },
+    [
+      buildMetadataSnapshot,
+      reset,
+      setMetadata,
+      setOriginalContent,
+      setOriginalMetadata,
+    ],
+  );
+
+  const getSavePayload = useCallback(
+    (
+      values: PostMetadataFormData,
+      contentHtml: string,
+      contentJson: CreatePostData['contentJson'],
+    ) => ({
+      baseData: {
+        title: values.title,
+        excerpt: values.excerpt || '',
+        authorId: values.authorId,
+        categorySlug: values.categorySlug,
+        tagSlugs: values.tagSlugs || [],
+        status: values.status,
+        visible: values.visible,
+        contentHtml,
+        contentJson,
+      } as Omit<UpdatePostData, 'slug' | 'publishedAt'>,
+    }),
+    [],
+  );
+
+  const prepareSaveData = useCallback(
+    async (mode: 'manual' | 'autosave') => {
+      const editorInstance = editorRef.current?.editor;
+      if (!editorInstance) {
+        if (mode === 'manual') {
+          toast.error('Editor is not ready');
+        }
+        return null;
+      }
+
+      const formValues = getValues();
+      const parsed = postMetadataSchema.safeParse(formValues);
+
+      if (!parsed.success) {
+        if (mode === 'manual') {
+          await form.trigger();
+          toast.error('Please fix the form errors before saving');
+        }
+        return null;
+      }
+
+      if (checkEditorEmpty(editorInstance)) {
+        if (mode === 'manual') {
+          toast.error('Post content cannot be empty');
+        }
+        return null;
+      }
+
+      if (parsed.data.status === 'published' && !hasTextContent(editorInstance)) {
+        if (mode === 'manual') {
+          toast.error(
+            'Posts with only images cannot be published. Add text content or save as draft.',
+          );
+        }
+        return null;
+      }
+
+      const { contentHtml, contentJson } = getContentFromEditor(editorInstance);
+      const { baseData } = getSavePayload(parsed.data, contentHtml, contentJson);
+
+      return {
+        formValues: parsed.data,
+        contentJsonSnapshot: JSON.stringify(contentJson),
+        baseData,
+      };
+    },
+    [editorRef, form, getSavePayload, getValues],
+  );
+
+  const runAutosave = useCallback(async () => {
+    if (!isAutosaveEnabled || isAutosavingRef.current) {
+      return;
+    }
+
+    const prepared = await prepareSaveData('autosave');
+    if (!prepared) {
+      setAutosaveState('idle');
+      return;
+    }
+
+    const { formValues, baseData, contentJsonSnapshot } = prepared;
+
+    isAutosavingRef.current = true;
+    setAutosaveState('saving');
+    setAutosaveError(null);
+
+    try {
+      if (isEditing || autosavePostSlugRef.current) {
+        const nextPost = await updatePostMutation.mutateAsync(
+          {
+            ...baseData,
+            slug: formValues.slug,
+            publishedAt: formValues.publishedAt || new Date(),
+          },
+          {
+            postSlug: autosavePostSlugRef.current,
+            showSuccessToast: false,
+            showErrorToast: false,
+          },
+        );
+
+        applySavedBaseline(formValues, contentJsonSnapshot);
+
+        if (nextPost.slug !== autosavePostSlugRef.current) {
+          autosavePostSlugRef.current = nextPost.slug;
+          startTransition(() => {
+            router.replace(
+              getWorkspacePath(workspaceSlug, `editor/${nextPost.slug}`),
+            );
+          });
+        }
+      } else {
+        const nextPost = await createPostMutation.mutateAsync(
+          {
+            ...baseData,
+            slug: formValues.slug,
+            publishedAt: formValues.publishedAt || new Date(),
+          } as CreatePostData & { slug: string; publishedAt: Date },
+          {
+            showSuccessToast: false,
+            showErrorToast: false,
+          },
+        );
+
+        autosavePostSlugRef.current = nextPost.slug;
+        applySavedBaseline(formValues, contentJsonSnapshot);
+        clearWorkspacePersistence(workspaceSlug);
+        clearWorkspacePersistence(undefined);
+
+        startTransition(() => {
+          router.replace(
+            getWorkspacePath(workspaceSlug, `editor/${nextPost.slug}`),
+          );
+        });
+      }
+
+      setAutosaveState('saved');
+    } catch (error) {
+      setAutosaveState('error');
+      setAutosaveError(getErrorMessage(error, 'Autosave failed'));
+    } finally {
+      isAutosavingRef.current = false;
+    }
+  }, [
+    applySavedBaseline,
+    createPostMutation,
+    isAutosaveEnabled,
+    isEditing,
+    prepareSaveData,
+    router,
+    updatePostMutation,
+    workspaceSlug,
+  ]);
+
   const handleSave = useCallback(async () => {
-    const isValidForm = await form.trigger();
-    if (!isValidForm) {
-      toast.error('Please fix the form errors before saving');
+    const prepared = await prepareSaveData('manual');
+    if (!prepared) {
       return;
     }
 
-    const editor = editorRef.current?.editor;
-    if (!editor) {
-      toast.error('Editor is not ready');
-      return;
-    }
-
-    if (checkEditorEmpty(editor)) {
-      toast.error('Post content cannot be empty');
-      return;
-    }
-
-    const formValues = getValues();
-
-    if (!formValues.title) {
-      toast.error('Title is required');
-      return;
-    }
-
-    if (!formValues.slug) {
-      toast.error('Slug is required');
-      return;
-    }
-
-    if (formValues.status === 'published' && !hasTextContent(editor)) {
-      toast.error(
-        'Posts with only images cannot be published. Add text content or save as draft.',
-      );
-      return;
-    }
-
-    const { contentHtml, contentJson } = getContentFromEditor(editor);
-
-    const baseData: Omit<UpdatePostData, 'slug' | 'publishedAt'> = {
-      title: formValues.title,
-      excerpt: formValues.excerpt || '',
-      authorId: formValues.authorId,
-      categorySlug: formValues.categorySlug,
-      tagSlugs: formValues.tagSlugs || [],
-      status: formValues.status,
-      visible: formValues.visible,
-      contentHtml,
-      contentJson,
-    };
+    const { formValues, baseData } = prepared;
 
     if (isEditing && postSlug) {
       const updateData: UpdatePostData = {
@@ -366,9 +551,22 @@ export function EditorSidebar() {
         },
       });
     }
-  }, [form, editorRef, getValues, isEditing, postSlug, workspaceSlug, createPostMutation, updatePostMutation, setMetadata, shouldSkipBlockerRef, router]);
+  }, [
+    createPostMutation,
+    editorRef,
+    isEditing,
+    postSlug,
+    prepareSaveData,
+    router,
+    setMetadata,
+    shouldSkipBlockerRef,
+    updatePostMutation,
+    workspaceSlug,
+  ]);
 
   const handleClear = () => {
+    clearAutosaveTimer();
+
     const editor = editorRef.current?.editor;
     if (editor) {
       editor.commands.setContent('<p></p>');
@@ -400,6 +598,14 @@ export function EditorSidebar() {
       status: 'draft',
     });
 
+    setOriginalMetadata(null);
+    setOriginalContent(null);
+    initialContentRef.current = null;
+    setHasContentChanged(false);
+    autosavePostSlugRef.current = '';
+    setAutosaveState('idle');
+    setAutosaveError(null);
+
     clearWorkspacePersistence(workspaceSlug);
     clearWorkspacePersistence(undefined);
   };
@@ -418,6 +624,12 @@ export function EditorSidebar() {
   // Register save handler and unsaved-changes checker on context refs for Ctrl+S and back-button
   useEffect(() => {
     saveRef.current = () => {
+      if (isAutosaveEnabled) {
+        clearAutosaveTimer();
+        void runAutosave();
+        return;
+      }
+
       if (!isSaveDisabled) {
         handleSave();
       }
@@ -425,7 +637,14 @@ export function EditorSidebar() {
     return () => {
       saveRef.current = null;
     };
-  }, [isSaveDisabled, handleSave, saveRef]);
+  }, [
+    clearAutosaveTimer,
+    handleSave,
+    isAutosaveEnabled,
+    isSaveDisabled,
+    runAutosave,
+    saveRef,
+  ]);
 
   useEffect(() => {
     hasUnsavedChangesRef.current = () => hasChanges;
@@ -434,10 +653,60 @@ export function EditorSidebar() {
     };
   }, [hasChanges, hasUnsavedChangesRef]);
 
-  const [activeTab, setActiveTab] = useState<'metadata' | 'analysis'>('metadata');
-  const [editorText, setEditorText] = React.useState('');
-  const [editorHtml, setEditorHtml] = React.useState('');
-  const [showClearDialog, setShowClearDialog] = useState(false);
+  const autosaveSignature = useMemo(
+    () =>
+      JSON.stringify({
+        values: allValues,
+        content: editorHtml,
+      }),
+    [allValues, editorHtml],
+  );
+
+  useEffect(() => {
+    saveAutosavePreference(isAutosaveEnabled);
+
+    if (!isAutosaveEnabled) {
+      clearAutosaveTimer();
+      setAutosaveState('idle');
+      setAutosaveError(null);
+      return;
+    }
+
+    if (!hasChanges) {
+      setAutosaveState('saved');
+      setAutosaveError(null);
+      return;
+    }
+
+    if (isSaving || isAutosavingRef.current) {
+      return;
+    }
+
+    clearAutosaveTimer();
+    setAutosaveState('pending');
+    setAutosaveError(null);
+
+    autosaveTimeoutRef.current = setTimeout(() => {
+      void runAutosave();
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => {
+      clearAutosaveTimer();
+    };
+  }, [
+    autosaveSignature,
+    clearAutosaveTimer,
+    hasChanges,
+    isAutosaveEnabled,
+    isSaving,
+    runAutosave,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      clearAutosaveTimer();
+    };
+  }, [clearAutosaveTimer]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as 'metadata' | 'analysis');
@@ -863,31 +1132,67 @@ export function EditorSidebar() {
         </TabsContent>
       </SidebarContent>
       <SidebarFooter>
-        <div className='flex gap-2 p-4 pt-2'>
-          <Button
-            className='flex-1'
-            size='sm'
-            onClick={handleSave}
-            disabled={isSaveDisabled}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className='mr-2 h-3 w-3 animate-spin' />
-                Saving...
-              </>
-            ) : (
-              'Save'
-            )}
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            className='flex-1'
-            onClick={() => setShowClearDialog(true)}
-            disabled={isSaving}
-          >
-            Clear
-          </Button>
+        <div className='border-t border-foreground/10 px-4 py-3'>
+          <div className='flex items-center justify-between gap-3'>
+            <div className='min-w-0'>
+              <p className='text-sm font-medium'>Autosave</p>
+              <p className='text-xs text-muted-foreground'>
+                Save changes to Convex automatically while you edit
+              </p>
+            </div>
+            <Switch
+              checked={isAutosaveEnabled}
+              onCheckedChange={setIsAutosaveEnabled}
+            />
+          </div>
+
+          {isAutosaveEnabled ? (
+            <div className='pt-3 text-xs text-muted-foreground'>
+              {autosaveState === 'saving' ? (
+                <div className='flex items-center gap-2'>
+                  <Loader2 className='h-3 w-3 animate-spin' />
+                  Autosaving...
+                </div>
+              ) : autosaveState === 'pending' ? (
+                'Changes pending autosave'
+              ) : autosaveState === 'error' ? (
+                <span className='text-destructive'>
+                  {autosaveError ?? 'Autosave failed'}
+                </span>
+              ) : autosaveState === 'saved' ? (
+                'All changes saved'
+              ) : (
+                'Autosave is on'
+              )}
+            </div>
+          ) : (
+            <div className='flex gap-2 pt-3'>
+              <Button
+                className='flex-1'
+                size='sm'
+                onClick={handleSave}
+                disabled={isSaveDisabled}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className='mr-2 h-3 w-3 animate-spin' />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='flex-1'
+                onClick={() => setShowClearDialog(true)}
+                disabled={isSaving}
+              >
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
       </SidebarFooter>
 

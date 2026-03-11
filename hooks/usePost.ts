@@ -15,6 +15,16 @@ type ConvexPostUpdatePayload = Omit<UpdatePostData, 'publishedAt'> & {
   publishedAt?: number;
 };
 
+type PostMutationOptions<TResult> = {
+  onSuccess?: (result: TResult) => void;
+  onError?: (error: unknown) => void;
+  showSuccessToast?: boolean;
+  showErrorToast?: boolean;
+  successMessage?: string;
+  errorMessage?: string;
+  postSlug?: string;
+};
+
 export function useWorkspacePosts(workspaceSlug: string) {
   const data = useQuery(api.posts.list, workspaceSlug ? { workspaceSlug } : 'skip') as
     | Post[]
@@ -45,45 +55,43 @@ export function useCreatePost(workspaceSlug: string) {
     api.posts.create,
   );
 
+  const createPost = async (
+    data: CreatePostData,
+    options?: PostMutationOptions<Post>,
+  ) => {
+    try {
+      const result = await mutation.mutateAsync({
+        workspaceSlug,
+        data: {
+          ...data,
+          publishedAt: data.publishedAt?.getTime(),
+        },
+      });
+
+      if (options?.showSuccessToast !== false) {
+        toast.success(options?.successMessage ?? 'Post created successfully');
+      }
+
+      options?.onSuccess?.(result);
+      return result;
+    } catch (error) {
+      if (options?.showErrorToast !== false) {
+        toast.error(
+          getErrorMessage(error, options?.errorMessage ?? 'Failed to create post'),
+        );
+      }
+
+      options?.onError?.(error);
+      throw error;
+    }
+  };
+
   return {
     ...mutation,
-    mutate: (
-      data: CreatePostData,
-      options?: { onSuccess?: (post: Post) => void; onError?: (error: unknown) => void },
-    ) => {
-      void mutation
-        .mutateAsync({
-          workspaceSlug,
-          data: {
-            ...data,
-            publishedAt: data.publishedAt?.getTime(),
-          },
-        })
-        .then((result) => {
-          toast.success('Post created successfully');
-          options?.onSuccess?.(result);
-        })
-        .catch((error) => {
-          toast.error(getErrorMessage(error, 'Failed to create post'));
-          options?.onError?.(error);
-        });
+    mutate: (data: CreatePostData, options?: PostMutationOptions<Post>) => {
+      void createPost(data, options);
     },
-    mutateAsync: async (data: CreatePostData) => {
-      try {
-        const result = await mutation.mutateAsync({
-          workspaceSlug,
-          data: {
-            ...data,
-            publishedAt: data.publishedAt?.getTime(),
-          },
-        });
-        toast.success('Post created successfully');
-        return result;
-      } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to create post'));
-        throw error;
-      }
-    },
+    mutateAsync: createPost,
   };
 }
 
@@ -93,47 +101,49 @@ export function useUpdatePost(workspaceSlug: string, postSlug: string) {
     Post
   >(api.posts.update);
 
+  const updatePost = async (
+    data: UpdatePostData,
+    options?: PostMutationOptions<Post>,
+  ) => {
+    const resolvedPostSlug = options?.postSlug ?? postSlug;
+    if (!resolvedPostSlug) {
+      throw new Error('Post slug is required to update a post');
+    }
+
+    try {
+      const result = await mutation.mutateAsync({
+        workspaceSlug,
+        postSlug: resolvedPostSlug,
+        data: {
+          ...data,
+          publishedAt: data.publishedAt?.getTime(),
+        },
+      });
+
+      if (options?.showSuccessToast !== false) {
+        toast.success(options?.successMessage ?? 'Post updated successfully');
+      }
+
+      options?.onSuccess?.(result);
+      return result;
+    } catch (error) {
+      if (options?.showErrorToast !== false) {
+        toast.error(
+          getErrorMessage(error, options?.errorMessage ?? 'Failed to update post'),
+        );
+      }
+
+      options?.onError?.(error);
+      throw error;
+    }
+  };
+
   return {
     ...mutation,
-    mutate: (
-      data: UpdatePostData,
-      options?: { onSuccess?: (post: Post) => void; onError?: (error: unknown) => void },
-    ) => {
-      void mutation
-        .mutateAsync({
-          workspaceSlug,
-          postSlug,
-          data: {
-            ...data,
-            publishedAt: data.publishedAt?.getTime(),
-          },
-        })
-        .then((result) => {
-          toast.success('Post updated successfully');
-          options?.onSuccess?.(result);
-        })
-        .catch((error) => {
-          toast.error(getErrorMessage(error, 'Failed to update post'));
-          options?.onError?.(error);
-        });
+    mutate: (data: UpdatePostData, options?: PostMutationOptions<Post>) => {
+      void updatePost(data, options);
     },
-    mutateAsync: async (data: UpdatePostData) => {
-      try {
-        const result = await mutation.mutateAsync({
-          workspaceSlug,
-          postSlug,
-          data: {
-            ...data,
-            publishedAt: data.publishedAt?.getTime(),
-          },
-        });
-        toast.success('Post updated successfully');
-        return result;
-      } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to update post'));
-        throw error;
-      }
-    },
+    mutateAsync: updatePost,
   };
 }
 

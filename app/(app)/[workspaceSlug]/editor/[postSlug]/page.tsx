@@ -35,13 +35,11 @@ export default function EditPostPage() {
   const workspaceSlug = params.workspaceSlug;
   const postSlug = params.postSlug;
   const {
-    metadata,
     setMetadata,
     editorRef,
     setOriginalMetadata,
     setOriginalContent,
-    originalMetadata,
-    originalContent,
+    hasUnsavedChangesRef,
     shouldSkipBlockerRef,
   } = useEditorContext();
 
@@ -81,28 +79,10 @@ export default function EditPostPage() {
     setOriginalContent(serializedContent);
   }, [post, setMetadata, setOriginalMetadata, setOriginalContent]);
 
-  const hasUnsavedChanges = useCallback(() => {
-    if (!originalMetadata || !metadata) return false;
-
-    const editor = editorRef.current?.editor;
-    if (!editor) return false;
-
-    const currentContent = JSON.stringify(editor.getJSON());
-    const contentChanged = currentContent !== originalContent;
-
-    const metadataChanged =
-      metadata.title !== originalMetadata.title ||
-      metadata.slug !== originalMetadata.slug ||
-      metadata.excerpt !== originalMetadata.excerpt ||
-      metadata.authorId !== originalMetadata.authorId ||
-      metadata.categorySlug !== originalMetadata.categorySlug ||
-      JSON.stringify(metadata.tagSlugs) !== JSON.stringify(originalMetadata.tagSlugs) ||
-      metadata.visible !== originalMetadata.visible ||
-      metadata.status !== originalMetadata.status ||
-      metadata.publishedAt?.getTime() !== originalMetadata.publishedAt?.getTime();
-
-    return contentChanged || metadataChanged;
-  }, [editorRef, metadata, originalContent, originalMetadata]);
+  const hasUnsavedChanges = useCallback(
+    () => hasUnsavedChangesRef.current?.() ?? false,
+    [hasUnsavedChangesRef],
+  );
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
