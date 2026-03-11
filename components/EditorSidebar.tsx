@@ -832,72 +832,74 @@ export function EditorSidebar() {
                 )}
               </div>
 
-              {/* Slug */}
-              <div className='space-y-1'>
-                <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
-                  <span>Slug</span>
-                  <span className='-ml-2 text-destructive'>*</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        Is for uniquely identifying the post in your workspace
-                        and it will be used for accessing the post content via
-                        API
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </label>
-                <Input
-                  className={cn(errors.slug && 'border-destructive')}
-                  {...register('slug', {
-                    onChange: () => {
-                      slugManuallyEditedRef.current = true;
-                    },
-                    onBlur: () => {
-                      syncToParent();
-                      form.clearErrors('slug');
-                    },
-                  })}
-                  placeholder='my-awesome-post'
-                />
-                {errors.slug && (
-                  <p className='text-xs text-destructive mt-1'>
-                    {errors.slug.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Author */}
-              <div className='space-y-1'>
-                <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
-                  <span>Author</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Select the author of this post</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </label>
-                <Controller
-                  control={control}
-                  name='authorId'
-                  render={({ field }) => (
-                    <AuthorSelect
-                      value={field.value ?? null}
-                      onChange={(authorId) => {
-                        field.onChange(authorId || undefined);
+              <div className='grid grid-cols-2 gap-3'>
+                {/* Slug */}
+                <div className='space-y-1'>
+                  <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
+                    <span>Slug</span>
+                    <span className='-ml-2 text-destructive'>*</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Is for uniquely identifying the post in your
+                          workspace and it will be used for accessing the post
+                          content via API
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </label>
+                  <Input
+                    className={cn(errors.slug && 'border-destructive')}
+                    {...register('slug', {
+                      onChange: () => {
+                        slugManuallyEditedRef.current = true;
+                      },
+                      onBlur: () => {
                         syncToParent();
-                      }}
-                      placeholder='Select author...'
-                      allowCreate
-                    />
+                        form.clearErrors('slug');
+                      },
+                    })}
+                    placeholder='my-awesome-post'
+                  />
+                  {errors.slug && (
+                    <p className='text-xs text-destructive mt-1'>
+                      {errors.slug.message}
+                    </p>
                   )}
-                />
+                </div>
+
+                {/* Author */}
+                <div className='space-y-1'>
+                  <label className='mb-2 flex items-center gap-2 text-base font-medium text-muted-foreground'>
+                    <span>Author</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Select the author of this post</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </label>
+                  <Controller
+                    control={control}
+                    name='authorId'
+                    render={({ field }) => (
+                      <AuthorSelect
+                        value={field.value ?? null}
+                        onChange={(authorId) => {
+                          field.onChange(authorId || undefined);
+                          syncToParent();
+                        }}
+                        placeholder='Select author...'
+                        allowCreate
+                      />
+                    )}
+                  />
+                </div>
               </div>
 
               {/* Category & Tags — side by side */}
@@ -963,35 +965,86 @@ export function EditorSidebar() {
               {/* Visible, Status & Published at — grouped */}
               <Separator className='bg-foreground/10' />
 
-              <div className='flex items-center justify-between'>
-                <span className='flex items-center gap-2 text-sm font-medium'>
-                  <span>Visible</span>
-                  <span className='-ml-2 text-destructive'>*</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        Determines if the post should be displayed in API
-                        response or not
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </span>
-                <Controller
-                  control={control}
-                  name='visible'
-                  render={({ field }) => (
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        syncToParent();
-                      }}
-                    />
-                  )}
-                />
+              <div className='grid grid-cols-2 gap-3'>
+                <div className='flex items-center justify-between rounded-md border border-border px-3 py-2'>
+                  <span className='flex items-center gap-2 text-sm font-medium'>
+                    <span>Visible</span>
+                    <span className='-ml-2 text-destructive'>*</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Determines if the post should be displayed in API
+                          response or not
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </span>
+                  <Controller
+                    control={control}
+                    name='visible'
+                    render={({ field }) => (
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          syncToParent();
+                        }}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className='space-y-1'>
+                  <label className='mb-2 flex items-center gap-2 text-sm font-medium'>
+                    <span>Published at</span>
+                    <span className='-ml-2 text-destructive'>*</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>The date when the post was or will be published</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </label>
+                  <Controller
+                    control={control}
+                    name='publishedAt'
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant='outline'
+                            className={cn(
+                              'h-9 w-full justify-start text-left font-normal px-3',
+                              errors.publishedAt && 'border-destructive',
+                            )}
+                          >
+                            <CalendarIcon className='mr-2 h-4 w-4' />
+                            {field.value ? (
+                              format(field.value, 'PPP')
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-auto p-0' align='end'>
+                          <Calendar
+                            mode='single'
+                            selected={field.value}
+                            onSelect={(date) => {
+                              field.onChange(date || new Date());
+                              syncToParent();
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                </div>
               </div>
 
               <div className='flex items-center justify-between'>
@@ -1030,54 +1083,6 @@ export function EditorSidebar() {
                 />
               </div>
 
-              <div className='flex items-center justify-between'>
-                <span className='flex items-center gap-2 text-sm font-medium'>
-                  <span>Published at</span>
-                  <span className='-ml-2 text-destructive'>*</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>The date when the post was or will be published</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </span>
-                <Controller
-                  control={control}
-                  name='publishedAt'
-                  render={({ field }) => (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant='outline'
-                          className={cn(
-                            'h-8 justify-start text-left font-normal px-3',
-                            errors.publishedAt && 'border-destructive',
-                          )}
-                        >
-                          <CalendarIcon className='mr-2 h-4 w-4' />
-                          {field.value ? (
-                            format(field.value, 'PPP')
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className='w-auto p-0' align='end'>
-                        <Calendar
-                          mode='single'
-                          selected={field.value}
-                          onSelect={(date) => {
-                            field.onChange(date || new Date());
-                            syncToParent();
-                          }}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                />
-              </div>
               {errors.publishedAt && (
                 <p className='text-xs text-destructive mt-1'>
                   {errors.publishedAt.message}
