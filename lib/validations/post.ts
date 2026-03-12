@@ -26,7 +26,6 @@ export const postMetadataSchema = z.object({
     .refine((date) => !isNaN(date.getTime()), {
       message: 'Published date must be a valid date',
     }),
-  visible: z.boolean(),
   status: z.enum(['draft', 'published']),
 });
 

@@ -74,15 +74,13 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 
 - the slug is wrong
 - the post is still a draft
-- the post is hidden
 - the post was deleted
 
 **Solutions:**
 
 1. Verify the slug in Vine.
 2. Make sure the post is `published`.
-3. Make sure the post is `visible`.
-4. Use the list endpoint first to confirm the slug.
+3. Use the list endpoint first to confirm the slug.
 
 ```bash
 curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
@@ -103,14 +101,12 @@ curl "https://vinecms.tech/api/public/v1/{API_KEY}/posts"
 
 - there are no posts in the workspace
 - all posts are drafts
-- all posts are hidden
 
 **Current rule:**
 
 Only posts with:
 
 - `status = "published"`
-- `visible = true`
 
 are returned.
 

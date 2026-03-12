@@ -117,7 +117,6 @@ export function EditorSidebar() {
       categorySlug: metadata.categorySlug,
       tagSlugs: metadata.tagSlugs || [],
       publishedAt: metadata.publishedAt || new Date(),
-      visible: metadata.visible ?? true,
       status: metadata.status || 'draft',
     }),
     [metadata],
@@ -184,7 +183,6 @@ export function EditorSidebar() {
       categorySlug: values.categorySlug,
       tagSlugs: values.tagSlugs || [],
       publishedAt: values.publishedAt || new Date(),
-      visible: values.visible ?? true,
       status: values.status || 'draft',
     }),
     [],
@@ -387,7 +385,6 @@ export function EditorSidebar() {
         categorySlug: values.categorySlug,
         tagSlugs: values.tagSlugs || [],
         status: values.status,
-        visible: values.visible,
         contentHtml,
         contentJson,
       } as Omit<UpdatePostData, 'slug' | 'publishedAt'>,
@@ -581,7 +578,6 @@ export function EditorSidebar() {
             categorySlug: undefined,
             tagSlugs: [],
             publishedAt: new Date(),
-            visible: true,
             status: 'draft',
           }));
 
@@ -620,7 +616,6 @@ export function EditorSidebar() {
       categorySlug: undefined,
       tagSlugs: [],
       publishedAt: new Date(),
-      visible: true,
       status: 'draft',
     };
 
@@ -634,7 +629,6 @@ export function EditorSidebar() {
       categorySlug: undefined,
       tagSlugs: [],
       publishedAt: new Date(),
-      visible: true,
       status: 'draft',
     });
 
@@ -727,7 +721,6 @@ export function EditorSidebar() {
         categorySlug: nextMetadata.categorySlug,
         tagSlugs: nextMetadata.tagSlugs,
         publishedAt: nextMetadata.publishedAt?.getTime(),
-        visible: nextMetadata.visible,
         status: nextMetadata.status,
         contentJson: editorInstance.getJSON() as ProseMirrorJSON,
       });
@@ -1047,37 +1040,42 @@ export function EditorSidebar() {
                 </div>
               </div>
 
-              {/* Visible, Status & Published at — grouped */}
+              {/* Status & Published at */}
               <Separator className='bg-foreground/10' />
 
               <div className='grid grid-cols-2 gap-3'>
-                <div className='flex items-center justify-between rounded-md border border-border px-3 py-2'>
-                  <span className='flex items-center gap-2 text-sm font-medium'>
-                    <span>Visible</span>
+                <div className='space-y-1'>
+                  <label className='mb-2 flex items-center gap-2 text-sm font-medium'>
+                    <span>Status</span>
                     <span className='-ml-2 text-destructive'>*</span>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>
-                          Determines if the post should be displayed in API
-                          response or not
-                        </p>
+                        <p>Set the post status as draft or published</p>
                       </TooltipContent>
                     </Tooltip>
-                  </span>
+                  </label>
                   <Controller
                     control={control}
-                    name='visible'
+                    name='status'
                     render={({ field }) => (
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value as 'draft' | 'published');
                           syncToParent();
                         }}
-                      />
+                      >
+                        <SelectTrigger className='h-9 w-full'>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='draft'>Draft</SelectItem>
+                          <SelectItem value='published'>Published</SelectItem>
+                        </SelectContent>
+                      </Select>
                     )}
                   />
                 </div>
@@ -1130,42 +1128,6 @@ export function EditorSidebar() {
                     )}
                   />
                 </div>
-              </div>
-
-              <div className='flex items-center justify-between'>
-                <span className='flex items-center gap-2 text-sm font-medium'>
-                  <span>Status</span>
-                  <span className='-ml-2 text-destructive'>*</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className='h-3.5 w-3.5 text-muted-foreground cursor-help' />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Set the post status as draft or published</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </span>
-                <Controller
-                  control={control}
-                  name='status'
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => {
-                        field.onChange(value as 'draft' | 'published');
-                        syncToParent();
-                      }}
-                    >
-                      <SelectTrigger className='h-8 w-28'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='draft'>Draft</SelectItem>
-                        <SelectItem value='published'>Published</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
               </div>
 
               {errors.publishedAt && (

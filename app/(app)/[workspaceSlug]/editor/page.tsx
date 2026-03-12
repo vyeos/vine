@@ -52,7 +52,6 @@ export default function EditorPage() {
       publishedAt: draft.metadata.publishedAt
         ? new Date(draft.metadata.publishedAt)
         : new Date(),
-      visible: draft.metadata.visible,
       status: draft.metadata.status,
     };
 

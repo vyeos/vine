@@ -128,7 +128,7 @@ The single post response includes every field from the list response, plus:
 
 ### Error Handling
 
-If the slug is invalid, hidden, or unpublished, the API returns:
+If the slug is invalid or unpublished, the API returns:
 
 ```json
 {
@@ -156,14 +156,13 @@ The estimate currently uses:
 
 That makes it more realistic than a plain word-count-only estimate.
 
-## Visibility Rules
+## Publication Rules
 
-Posts are returned only when both conditions are true:
+Posts are returned only when:
 
 - `status = "published"`
-- `visible = true`
 
-Drafts and hidden posts are excluded from public responses.
+Drafts are excluded from public responses.
 
 ## Example Usage
 

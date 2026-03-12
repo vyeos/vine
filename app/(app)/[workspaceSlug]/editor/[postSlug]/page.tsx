@@ -70,7 +70,6 @@ export default function EditPostPage() {
           publishedAt: draft.metadata.publishedAt
             ? new Date(draft.metadata.publishedAt).toISOString()
             : null,
-          visible: draft.metadata.visible,
           status: draft.metadata.status,
           contentJson: draft.contentJson,
         }
@@ -88,7 +87,6 @@ export default function EditPostPage() {
       categorySlug: source.category?.slug,
       tagSlugs: source.tags.map((tag) => tag.slug),
       publishedAt: source.publishedAt ? new Date(source.publishedAt) : new Date(),
-      visible: source.visible,
       status: source.status,
     };
     const serializedContent = source.contentJson

@@ -6,6 +6,5 @@ export interface PostMetadata {
   excerpt: string;
   categorySlug?: string;
   tagSlugs: string[];
-  visible: boolean;
   status: 'draft' | 'published';
 }

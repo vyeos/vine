@@ -7,7 +7,6 @@ export interface Post {
   slug: string;
   excerpt: string;
   status: 'draft' | 'published';
-  visible: boolean;
   createdAt: string;
   publishedAt: string | null;
   updatedAt: string;
@@ -41,7 +40,6 @@ export interface CreatePostData {
   categorySlug?: string;
   tagSlugs: string[];
   status: 'draft' | 'published';
-  visible: boolean;
   contentHtml: string;
   contentJson: ProseMirrorJSON;
   publishedAt?: Date | null;
@@ -55,7 +53,6 @@ export interface UpdatePostData {
   categorySlug?: string;
   tagSlugs?: string[];
   status?: 'draft' | 'published';
-  visible?: boolean;
   contentHtml?: string;
   contentJson?: ProseMirrorJSON;
   publishedAt?: Date | null;

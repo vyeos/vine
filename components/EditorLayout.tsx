@@ -40,7 +40,6 @@ const getInitialMetadata = (): PostMetadata => ({
   excerpt: '',
   categorySlug: undefined,
   tagSlugs: [],
-  visible: true,
   status: 'draft',
 });
 

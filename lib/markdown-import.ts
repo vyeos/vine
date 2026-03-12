@@ -54,13 +54,6 @@ function toStatus(value: unknown): 'draft' | 'published' {
   return 'draft';
 }
 
-function toVisible(value: unknown): boolean {
-  if (value == null) return true;
-  if (typeof value === 'boolean') return value;
-  const s = String(value).toLowerCase();
-  return s === 'true' || s === '1' || s === 'yes';
-}
-
 export interface ParseMarkdownResult {
   frontmatter: Partial<PostMetadata>;
   content: string;
@@ -75,7 +68,6 @@ export function parseMarkdown(raw: string): ParseMarkdownResult {
 
   if (data.title != null) frontmatter.title = String(data.title).trim();
   if (data.slug != null) frontmatter.slug = toSlug(data.slug);
-  if (data.visible != null) frontmatter.visible = toVisible(data.visible);
   if (data.status != null) frontmatter.status = toStatus(data.status);
   if (data.description != null) frontmatter.excerpt = String(data.description).trim();
   const publishedDate = parseDate(data.date ?? data.publishedAt ?? data.published);

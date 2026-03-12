@@ -29,7 +29,7 @@ async function validateApiKey(ctx: any, apiKey: string) {
 }
 
 function isPublicPost(post: any) {
-  return post.visible === true && post.status === 'published';
+  return post.status === 'published';
 }
 
 async function getPublicPostBySlug(ctx: any, workspaceId: string, postSlug: string) {

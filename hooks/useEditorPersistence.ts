@@ -14,7 +14,6 @@ export type EditorDraftRecord = {
     categorySlug?: string;
     tagSlugs: string[];
     publishedAt: number | null;
-    visible: boolean;
     status: 'draft' | 'published';
   };
   contentJson: ProseMirrorJSON | null;
@@ -29,7 +28,6 @@ type SaveEditorDraftData = {
   categorySlug?: string;
   tagSlugs: string[];
   publishedAt?: number;
-  visible: boolean;
   status: 'draft' | 'published';
   contentJson: ProseMirrorJSON;
 };
