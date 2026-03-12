@@ -26,6 +26,11 @@ export default defineSchema({
     apiUsageAlerts: v.boolean(),
     updatedAt: v.number(),
   }).index('by_user_id', ['userId']),
+  editorPreferences: defineTable({
+    userId: v.id('users'),
+    autosaveEnabled: v.boolean(),
+    updatedAt: v.number(),
+  }).index('by_user_id', ['userId']),
   workspaces: defineTable({
     name: v.string(),
     slug: v.string(),
@@ -113,6 +118,26 @@ export default defineSchema({
   })
     .index('by_post_id', ['postId'])
     .index('by_workspace_id_and_tag_slug', ['workspaceId', 'tagSlug']),
+  editorDrafts: defineTable({
+    workspaceId: v.id('workspaces'),
+    userId: v.id('users'),
+    draftKey: v.string(),
+    title: v.string(),
+    slug: v.string(),
+    excerpt: v.string(),
+    authorId: v.optional(v.id('authors')),
+    categorySlug: v.optional(v.string()),
+    tagSlugs: v.array(v.string()),
+    publishedAt: v.optional(v.number()),
+    visible: v.boolean(),
+    status: v.union(v.literal('draft'), v.literal('published')),
+    contentJson: v.any(),
+    updatedAt: v.number(),
+  }).index('by_user_id_and_workspace_id_and_draft_key', [
+    'userId',
+    'workspaceId',
+    'draftKey',
+  ]),
   workspaceApiKeys: defineTable({
     workspaceId: v.id('workspaces'),
     description: v.string(),

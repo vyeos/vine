@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -17,7 +17,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import type { PostMetadata } from '@/types/editor';
-import { loadMetadata, saveMetadata } from '@/components/editor/persistence';
 import type { TiptapHandle } from '@/components/editor/Tiptap';
 import { EditorProvider } from '@/components/editor/editor-context';
 import { EditorSidebar } from '@/components/EditorSidebar';
@@ -50,111 +49,7 @@ export function EditorLayout({ children }: { children: React.ReactNode }) {
   const params = useParams<{ workspaceSlug: string; postSlug?: string }>();
   const workspaceSlug = params.workspaceSlug;
   const postSlug = params.postSlug;
-
   const { data: workspace, isLoading } = useWorkspaceVerification(workspaceSlug);
-  const initialMetadataRef = useRef<PostMetadata>(getInitialMetadata());
-
-  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
-    if (typeof document === 'undefined') {
-      return true;
-    }
-
-    const saved = getCookie(EDITOR_SIDEBAR_COOKIE_NAME);
-    if (saved === 'false') return false;
-    if (saved === 'true') return true;
-    return true;
-  });
-  const [metadata, setMetadata] = useState<PostMetadata>(() => getInitialMetadata());
-  const [originalMetadata, setOriginalMetadata] = useState<PostMetadata | null>(null);
-  const [originalContent, setOriginalContent] = useState<string | null>(null);
-  const editorRef = useRef<TiptapHandle>(null);
-  const shouldSkipBlockerRef = useRef<boolean>(false);
-  const saveRef = useRef<(() => void) | null>(null);
-  const hasUnsavedChangesRef = useRef<(() => boolean) | null>(null);
-  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
-  const [pendingLeaveAction, setPendingLeaveAction] = useState<(() => void) | null>(null);
-
-  // Ctrl+S keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        saveRef.current?.();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleGoBack = useCallback(() => {
-    const hasChanges = hasUnsavedChangesRef.current?.() ?? false;
-    if (hasChanges && !shouldSkipBlockerRef.current) {
-      setShowLeaveDialog(true);
-      setPendingLeaveAction(() => () => {
-        shouldSkipBlockerRef.current = true;
-        router.back();
-      });
-      return;
-    }
-    router.back();
-  }, [router]);
-
-  useEffect(() => {
-    setOriginalMetadata(null);
-    setOriginalContent(null);
-  }, [workspaceSlug, postSlug]);
-
-  useEffect(() => {
-    if (postSlug || originalMetadata !== null) {
-      return;
-    }
-    setOriginalMetadata(initialMetadataRef.current);
-  }, [originalMetadata, postSlug]);
-
-  useEffect(() => {
-    if (!workspaceSlug || postSlug) return;
-
-    const savedMetadata = loadMetadata(workspaceSlug);
-    if (savedMetadata) {
-      setMetadata({
-        ...getInitialMetadata(),
-        ...savedMetadata,
-        publishedAt: savedMetadata.publishedAt
-          ? new Date(savedMetadata.publishedAt as string)
-          : new Date(),
-      });
-    }
-  }, [workspaceSlug, postSlug]);
-
-  useEffect(() => {
-    if (!workspaceSlug || postSlug) return;
-
-    if (
-      metadata.title ||
-      metadata.excerpt ||
-      metadata.categorySlug ||
-      metadata.authorId ||
-      metadata.tagSlugs?.length
-    ) {
-      saveMetadata(metadata, workspaceSlug);
-    }
-  }, [metadata, workspaceSlug, postSlug]);
-
-  const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const title = e.target.value;
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
-
-    setMetadata((prev) => ({
-      ...prev,
-      title,
-      slug,
-    }));
-  };
 
   useEffect(() => {
     if (!isLoading && !workspace) {
@@ -179,6 +74,95 @@ export function EditorLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+
+  return (
+    <EditorLayoutShell
+      key={`${workspaceSlug}:${postSlug ?? NEW_POST_KEY}`}
+      workspaceSlug={workspaceSlug}
+      postSlug={postSlug}
+    >
+      {children}
+    </EditorLayoutShell>
+  );
+}
+
+const NEW_POST_KEY = '__new__';
+
+function EditorLayoutShell({
+  children,
+  workspaceSlug,
+  postSlug,
+}: {
+  children: React.ReactNode;
+  workspaceSlug: string;
+  postSlug?: string;
+}) {
+  const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    if (typeof document === 'undefined') {
+      return true;
+    }
+
+    const saved = getCookie(EDITOR_SIDEBAR_COOKIE_NAME);
+    if (saved === 'false') return false;
+    if (saved === 'true') return true;
+    return true;
+  });
+  const [metadata, setMetadata] = useState<PostMetadata>(() => getInitialMetadata());
+  const [originalMetadata, setOriginalMetadata] = useState<PostMetadata | null>(
+    () => (postSlug ? null : getInitialMetadata()),
+  );
+  const [originalContent, setOriginalContent] = useState<string | null>(null);
+  const editorRef = useRef<TiptapHandle>(null);
+  const shouldSkipBlockerRef = useRef<boolean>(false);
+  const saveRef = useRef<(() => void) | null>(null);
+  const hasUnsavedChangesRef = useRef<(() => boolean) | null>(null);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingLeaveAction, setPendingLeaveAction] = useState<(() => void) | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        saveRef.current?.();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleGoBack = useCallback(() => {
+    const hasChanges = hasUnsavedChangesRef.current?.() ?? false;
+    if (hasChanges && !shouldSkipBlockerRef.current) {
+      setShowLeaveDialog(true);
+      setPendingLeaveAction(() => () => {
+        shouldSkipBlockerRef.current = true;
+        router.back();
+      });
+      return;
+    }
+
+    router.back();
+  }, [router]);
+
+  const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const title = e.target.value;
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
+    setMetadata((prev) => ({
+      ...prev,
+      title,
+      slug,
+    }));
+  };
 
   return (
     <EditorProvider

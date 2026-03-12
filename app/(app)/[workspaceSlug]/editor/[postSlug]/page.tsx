@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { ErrorFallback } from '@/components/ErrorFallback';
 import { Tiptap } from '@/components/editor/Tiptap';
 import { usePost } from '@/hooks/usePost';
-import { clearContent, clearMetadata } from '@/components/editor/persistence';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Card,
@@ -28,6 +27,7 @@ import { AlertCircle } from 'lucide-react';
 import { useEditorContext } from '@/components/editor/editor-context';
 import type { PostMetadata } from '@/types/editor';
 import { getWorkspacePath } from '@/lib/utils';
+import { useEditorDraft } from '@/hooks/useEditorPersistence';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -47,37 +47,58 @@ export default function EditPostPage() {
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
   const { data: post, isLoading: isLoadingPost } = usePost(workspaceSlug || '', postSlug || '');
+  const { data: draft, isLoading: isLoadingDraft } = useEditorDraft(
+    workspaceSlug || '',
+    postSlug || '',
+  );
 
   useEffect(() => {
-    if (workspaceSlug) {
-      clearContent(workspaceSlug);
-      clearMetadata(workspaceSlug);
-    }
     shouldSkipBlockerRef.current = false;
-  }, [workspaceSlug, shouldSkipBlockerRef]);
+  }, [shouldSkipBlockerRef]);
 
   useEffect(() => {
-    if (!post) {
+    const source = draft
+      ? {
+          title: draft.metadata.title,
+          slug: draft.metadata.slug,
+          excerpt: draft.metadata.excerpt,
+          author: draft.metadata.authorId ? { id: draft.metadata.authorId } : null,
+          category: draft.metadata.categorySlug
+            ? { slug: draft.metadata.categorySlug }
+            : null,
+          tags: draft.metadata.tagSlugs.map((tag) => ({ slug: tag })),
+          publishedAt: draft.metadata.publishedAt
+            ? new Date(draft.metadata.publishedAt).toISOString()
+            : null,
+          visible: draft.metadata.visible,
+          status: draft.metadata.status,
+          contentJson: draft.contentJson,
+        }
+      : post;
+
+    if (!source) {
       return;
     }
 
     const postMetadata: PostMetadata = {
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt,
-      authorId: post.author?.id,
-      categorySlug: post.category?.slug,
-      tagSlugs: post.tags.map((tag) => tag.slug),
-      publishedAt: post.publishedAt ? new Date(post.publishedAt) : new Date(),
-      visible: post.visible,
-      status: post.status,
+      title: source.title,
+      slug: source.slug,
+      excerpt: source.excerpt,
+      authorId: source.author?.id,
+      categorySlug: source.category?.slug,
+      tagSlugs: source.tags.map((tag) => tag.slug),
+      publishedAt: source.publishedAt ? new Date(source.publishedAt) : new Date(),
+      visible: source.visible,
+      status: source.status,
     };
-    const serializedContent = post.contentJson ? JSON.stringify(post.contentJson) : null;
+    const serializedContent = source.contentJson
+      ? JSON.stringify(source.contentJson)
+      : null;
 
     setMetadata(postMetadata);
     setOriginalMetadata(postMetadata);
     setOriginalContent(serializedContent);
-  }, [post, setMetadata, setOriginalMetadata, setOriginalContent]);
+  }, [draft, post, setMetadata, setOriginalMetadata, setOriginalContent]);
 
   const hasUnsavedChanges = useCallback(
     () => hasUnsavedChangesRef.current?.() ?? false,
@@ -112,7 +133,7 @@ export default function EditPostPage() {
     router.push(getWorkspacePath(workspaceSlug, 'posts'));
   }, [hasUnsavedChanges, router, workspaceSlug]);
 
-  if (isLoadingPost) {
+  if (isLoadingPost || isLoadingDraft) {
     return (
       <div className='flex h-full items-center justify-center'>
         <div className='flex flex-col items-center gap-4'>
@@ -152,9 +173,7 @@ export default function EditPostPage() {
         <div className='flex h-full w-full flex-col'>
           <Tiptap
             ref={editorRef}
-            workspaceSlug={workspaceSlug}
-            initialContent={post.contentJson || null}
-            disablePersistence
+            initialContent={draft?.contentJson ?? post.contentJson ?? null}
           />
         </div>
       </ErrorBoundary>

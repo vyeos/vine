@@ -51,11 +51,7 @@ import {
   isEditorEmpty as checkEditorEmpty,
   hasTextContent,
 } from '@/components/editor/content-utils';
-import {
-  clearWorkspacePersistence,
-  loadAutosavePreference,
-  saveAutosavePreference,
-} from '@/components/editor/persistence';
+import type { ProseMirrorJSON } from '@/components/editor/persistence';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -75,8 +71,16 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { estimateReadingTime, getTextStatistics } from '@/lib/reading-time';
 import { getErrorMessage } from '@/lib/error-utils';
+import {
+  useClearEditorDraft,
+  useEditorAutosavePreference,
+  useSaveEditorDraft,
+  useSetEditorAutosavePreference,
+} from '@/hooks/useEditorPersistence';
 
 const AUTOSAVE_DELAY_MS = 1200;
+const DRAFT_SAVE_DELAY_MS = 500;
+const NEW_POST_DRAFT_KEY = '__new__';
 type AutosaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 
 export function EditorSidebar() {
@@ -97,6 +101,11 @@ export function EditorSidebar() {
 
   const createPostMutation = useCreatePost(workspaceSlug);
   const updatePostMutation = useUpdatePost(workspaceSlug, postSlug || '');
+  const draftKey = postSlug || NEW_POST_DRAFT_KEY;
+  const saveDraftMutation = useSaveEditorDraft(workspaceSlug, draftKey);
+  const clearDraftMutation = useClearEditorDraft(workspaceSlug, draftKey);
+  const { data: autosavePreference } = useEditorAutosavePreference();
+  const setAutosavePreferenceMutation = useSetEditorAutosavePreference();
   const router = useRouter();
 
   const defaultValues = useMemo<PostMetadataFormData>(
@@ -137,16 +146,14 @@ export function EditorSidebar() {
   const autosaveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const draftSaveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const autosavePostSlugRef = React.useRef(postSlug || '');
   const isAutosavingRef = React.useRef(false);
 
   const [hasContentChanged, setHasContentChanged] = React.useState(false);
-  const [isAutosaveEnabled, setIsAutosaveEnabled] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return loadAutosavePreference();
-  });
+  const [isAutosaveEnabled, setIsAutosaveEnabled] = useState(false);
   const [autosaveState, setAutosaveState] = useState<AutosaveState>('idle');
   const [autosaveError, setAutosaveError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'metadata' | 'analysis'>(
@@ -163,6 +170,10 @@ export function EditorSidebar() {
       autosavePostSlugRef.current = postSlug;
     }
   }, [postSlug]);
+
+  useEffect(() => {
+    setIsAutosaveEnabled(autosavePreference);
+  }, [autosavePreference]);
 
   const buildMetadataSnapshot = useCallback(
     (values: PostMetadataFormData): PostMetadata => ({
@@ -314,6 +325,36 @@ export function EditorSidebar() {
     }
   }, []);
 
+  const clearDraftSaveTimer = useCallback(() => {
+    if (draftSaveTimeoutRef.current) {
+      clearTimeout(draftSaveTimeoutRef.current);
+      draftSaveTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearCurrentDraft = useCallback(() => {
+    if (!workspaceSlug) {
+      return;
+    }
+
+    void clearDraftMutation.mutateAsync();
+  }, [clearDraftMutation, workspaceSlug]);
+
+  const handleAutosaveToggle = useCallback(
+    (checked: boolean) => {
+      setIsAutosaveEnabled(checked);
+      setAutosaveError(null);
+
+      void setAutosavePreferenceMutation.mutateAsync(checked).catch((error) => {
+        setIsAutosaveEnabled((current) => !current);
+        toast.error(
+          getErrorMessage(error, 'Failed to update editor autosave preference'),
+        );
+      });
+    },
+    [setAutosavePreferenceMutation],
+  );
+
   const applySavedBaseline = useCallback(
     (values: PostMetadataFormData, contentJsonSnapshot: string) => {
       const nextMetadata = buildMetadataSnapshot(values);
@@ -436,6 +477,7 @@ export function EditorSidebar() {
         );
 
         applySavedBaseline(formValues, contentJsonSnapshot);
+        clearCurrentDraft();
 
         if (nextPost.slug !== autosavePostSlugRef.current) {
           autosavePostSlugRef.current = nextPost.slug;
@@ -460,8 +502,7 @@ export function EditorSidebar() {
 
         autosavePostSlugRef.current = nextPost.slug;
         applySavedBaseline(formValues, contentJsonSnapshot);
-        clearWorkspacePersistence(workspaceSlug);
-        clearWorkspacePersistence(undefined);
+        clearCurrentDraft();
 
         startTransition(() => {
           router.replace(
@@ -479,6 +520,7 @@ export function EditorSidebar() {
     }
   }, [
     applySavedBaseline,
+    clearCurrentDraft,
     createPostMutation,
     isAutosaveEnabled,
     isEditing,
@@ -510,9 +552,7 @@ export function EditorSidebar() {
             editorInstance.commands.setContent('<p></p>');
           }
 
-          clearWorkspacePersistence(workspaceSlug);
-          clearWorkspacePersistence(undefined);
-
+          clearCurrentDraft();
           shouldSkipBlockerRef.current = true;
           router.push(getWorkspacePath(workspaceSlug, 'posts'));
         },
@@ -531,9 +571,7 @@ export function EditorSidebar() {
             editorInstance.commands.setContent('<p></p>');
           }
 
-          clearWorkspacePersistence(workspaceSlug);
-          clearWorkspacePersistence(undefined);
-
+          clearCurrentDraft();
           setMetadata((prev) => ({
             ...prev,
             title: '',
@@ -552,6 +590,7 @@ export function EditorSidebar() {
       });
     }
   }, [
+    clearCurrentDraft,
     createPostMutation,
     editorRef,
     isEditing,
@@ -566,6 +605,7 @@ export function EditorSidebar() {
 
   const handleClear = () => {
     clearAutosaveTimer();
+    clearDraftSaveTimer();
 
     const editor = editorRef.current?.editor;
     if (editor) {
@@ -606,8 +646,7 @@ export function EditorSidebar() {
     setAutosaveState('idle');
     setAutosaveError(null);
 
-    clearWorkspacePersistence(workspaceSlug);
-    clearWorkspacePersistence(undefined);
+    clearCurrentDraft();
   };
 
   const editorIsEmpty = editor ? checkEditorEmpty(editor) : true;
@@ -639,6 +678,8 @@ export function EditorSidebar() {
     };
   }, [
     clearAutosaveTimer,
+    clearCurrentDraft,
+    clearDraftSaveTimer,
     handleSave,
     isAutosaveEnabled,
     isSaveDisabled,
@@ -663,8 +704,51 @@ export function EditorSidebar() {
   );
 
   useEffect(() => {
-    saveAutosavePreference(isAutosaveEnabled);
+    if (isAutosaveEnabled || !hasChanges) {
+      clearDraftSaveTimer();
+      return;
+    }
 
+    const editorInstance = editorRef.current?.editor;
+    if (!editorInstance) {
+      return;
+    }
+
+    clearDraftSaveTimer();
+    draftSaveTimeoutRef.current = setTimeout(() => {
+      const values = getValues();
+      const nextMetadata = buildMetadataSnapshot(values);
+
+      void saveDraftMutation.mutateAsync({
+        title: nextMetadata.title,
+        slug: nextMetadata.slug,
+        excerpt: nextMetadata.excerpt,
+        authorId: nextMetadata.authorId,
+        categorySlug: nextMetadata.categorySlug,
+        tagSlugs: nextMetadata.tagSlugs,
+        publishedAt: nextMetadata.publishedAt?.getTime(),
+        visible: nextMetadata.visible,
+        status: nextMetadata.status,
+        contentJson: editorInstance.getJSON() as ProseMirrorJSON,
+      });
+    }, DRAFT_SAVE_DELAY_MS);
+
+    return () => {
+      clearDraftSaveTimer();
+    };
+  }, [
+    allValues,
+    buildMetadataSnapshot,
+    clearDraftSaveTimer,
+    editorHtml,
+    editorRef,
+    getValues,
+    hasChanges,
+    isAutosaveEnabled,
+    saveDraftMutation,
+  ]);
+
+  useEffect(() => {
     if (!isAutosaveEnabled) {
       clearAutosaveTimer();
       setAutosaveState('idle');
@@ -705,8 +789,9 @@ export function EditorSidebar() {
   useEffect(() => {
     return () => {
       clearAutosaveTimer();
+      clearDraftSaveTimer();
     };
-  }, [clearAutosaveTimer]);
+  }, [clearAutosaveTimer, clearDraftSaveTimer]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as 'metadata' | 'analysis');
@@ -1147,7 +1232,7 @@ export function EditorSidebar() {
             </div>
             <Switch
               checked={isAutosaveEnabled}
-              onCheckedChange={setIsAutosaveEnabled}
+              onCheckedChange={handleAutosaveToggle}
             />
           </div>
 

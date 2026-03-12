@@ -8,7 +8,6 @@ import {
   useRef,
 } from 'react';
 import type { Editor } from '@tiptap/react';
-import { loadContent, saveContent, createDebouncedSaveContent } from './persistence';
 import type { ProseMirrorJSON } from './persistence';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toolbar } from './Toolbar';
@@ -54,10 +53,8 @@ function isMarkdownPaste(text: string): boolean {
 }
 
 interface TiptapProps {
-  workspaceSlug?: string;
   initialContent?: ProseMirrorJSON | null;
   initialMarkdownImport?: string;
-  disablePersistence?: boolean;
 }
 
 export interface TiptapHandle {
@@ -67,10 +64,8 @@ export interface TiptapHandle {
 export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
   (
     {
-      workspaceSlug,
       initialContent,
       initialMarkdownImport,
-      disablePersistence = false,
     },
     ref,
   ) => {
@@ -79,7 +74,6 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
     const [pendingImport, setPendingImport] = useState<string | null>(null);
     const dragCounterRef = useRef(0);
     const editorRefForPaste = useRef<Editor | null>(null);
-    const debouncedSaveRef = useRef(createDebouncedSaveContent(500));
 
     const applyMarkdownImport = useCallback(
       (raw: string, editorInstance: Editor) => {
@@ -132,12 +126,6 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
       extensions: getEditorExtensions(),
       content: '<p></p>',
       immediatelyRender: false,
-      onUpdate: ({ editor }) => {
-        if (!disablePersistence) {
-          const content = editor.getJSON();
-          debouncedSaveRef.current(content, workspaceSlug);
-        }
-      },
       editorProps: {
         attributes: {
           class: 'tiptap',
@@ -190,14 +178,6 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
       editorRefForDrop.current = editor;
     }, [editor]);
 
-    // Flush debounced save on unmount so no keystrokes are lost
-    useEffect(() => {
-      const debouncedSave = debouncedSaveRef.current;
-      return () => {
-        debouncedSave.flush();
-      };
-    }, []);
-
     useImperativeHandle(ref, () => ({
       editor,
     }));
@@ -212,19 +192,13 @@ export const Tiptap = forwardRef<TiptapHandle, TiptapProps>(
       } else if (initialContent) {
         editor.commands.setContent(initialContent);
       } else {
-        const savedContent = loadContent(workspaceSlug);
-        if (savedContent) {
-          editor.commands.setContent(savedContent);
-        } else {
-          editor.commands.setContent('<p></p>');
-        }
+        editor.commands.setContent('<p></p>');
       }
 
       setTimeout(() => {
         editor.commands.focus();
       }, 0);
     }, [
-      workspaceSlug,
       editor,
       initialContent,
       initialMarkdownImport,
