@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowUpRight,
@@ -236,15 +236,6 @@ function SettingsHub({
       .toUpperCase();
   }, [user.name]);
 
-  const hasPreferenceChanges =
-    !!overview &&
-    (defaultWorkspaceSlug !== (overview.preferences.defaultWorkspaceSlug ?? 'none') ||
-      defaultLandingPage !== overview.preferences.defaultLandingPage ||
-      emailInvites !== overview.preferences.emailInvites ||
-      productUpdates !== overview.preferences.productUpdates ||
-      publishAlerts !== overview.preferences.publishAlerts ||
-      apiUsageAlerts !== overview.preferences.apiUsageAlerts);
-
   const hasAvatarChanges =
     !!overview &&
     (avatarMode !== (overview.user.avatarMode ?? 'provider') ||
@@ -257,6 +248,202 @@ function SettingsHub({
   const hasNameChanges = draftName.trim() !== (overview?.user.name ?? user.name);
   const hasAccountChanges = hasNameChanges || hasAvatarChanges;
   const isSavingAccount = editProfileMutation.isPending || updateAvatarMutation.isPending;
+
+  const persistPreferences = useCallback(
+    async (next: {
+      defaultWorkspaceSlug: string;
+      defaultLandingPage: UserLandingPage;
+      emailInvites: boolean;
+      productUpdates: boolean;
+      publishAlerts: boolean;
+      apiUsageAlerts: boolean;
+    }) => {
+      await updatePreferencesMutation.mutateAsync({
+        defaultWorkspaceSlug:
+          next.defaultWorkspaceSlug === 'none' ? undefined : next.defaultWorkspaceSlug,
+        defaultLandingPage: next.defaultLandingPage,
+        emailInvites: next.emailInvites,
+        productUpdates: next.productUpdates,
+        publishAlerts: next.publishAlerts,
+        apiUsageAlerts: next.apiUsageAlerts,
+      });
+    },
+    [updatePreferencesMutation],
+  );
+
+  const handleDefaultWorkspaceChange = useCallback(
+    async (value: string) => {
+      const previousValue = defaultWorkspaceSlug;
+      setDefaultWorkspaceSlug(value);
+
+      try {
+        await persistPreferences({
+          defaultWorkspaceSlug: value,
+          defaultLandingPage,
+          emailInvites,
+          productUpdates,
+          publishAlerts,
+          apiUsageAlerts,
+        });
+      } catch {
+        setDefaultWorkspaceSlug(previousValue);
+      }
+    },
+    [
+      apiUsageAlerts,
+      defaultLandingPage,
+      defaultWorkspaceSlug,
+      emailInvites,
+      persistPreferences,
+      productUpdates,
+      publishAlerts,
+    ],
+  );
+
+  const handleDefaultLandingPageChange = useCallback(
+    async (value: UserLandingPage) => {
+      const previousValue = defaultLandingPage;
+      setDefaultLandingPage(value);
+
+      try {
+        await persistPreferences({
+          defaultWorkspaceSlug,
+          defaultLandingPage: value,
+          emailInvites,
+          productUpdates,
+          publishAlerts,
+          apiUsageAlerts,
+        });
+      } catch {
+        setDefaultLandingPage(previousValue);
+      }
+    },
+    [
+      apiUsageAlerts,
+      defaultLandingPage,
+      defaultWorkspaceSlug,
+      emailInvites,
+      persistPreferences,
+      productUpdates,
+      publishAlerts,
+    ],
+  );
+
+  const handleEmailInvitesChange = useCallback(
+    async (checked: boolean) => {
+      const previousValue = emailInvites;
+      setEmailInvites(checked);
+
+      try {
+        await persistPreferences({
+          defaultWorkspaceSlug,
+          defaultLandingPage,
+          emailInvites: checked,
+          productUpdates,
+          publishAlerts,
+          apiUsageAlerts,
+        });
+      } catch {
+        setEmailInvites(previousValue);
+      }
+    },
+    [
+      apiUsageAlerts,
+      defaultLandingPage,
+      defaultWorkspaceSlug,
+      emailInvites,
+      persistPreferences,
+      productUpdates,
+      publishAlerts,
+    ],
+  );
+
+  const handleProductUpdatesChange = useCallback(
+    async (checked: boolean) => {
+      const previousValue = productUpdates;
+      setProductUpdates(checked);
+
+      try {
+        await persistPreferences({
+          defaultWorkspaceSlug,
+          defaultLandingPage,
+          emailInvites,
+          productUpdates: checked,
+          publishAlerts,
+          apiUsageAlerts,
+        });
+      } catch {
+        setProductUpdates(previousValue);
+      }
+    },
+    [
+      apiUsageAlerts,
+      defaultLandingPage,
+      defaultWorkspaceSlug,
+      emailInvites,
+      persistPreferences,
+      productUpdates,
+      publishAlerts,
+    ],
+  );
+
+  const handlePublishAlertsChange = useCallback(
+    async (checked: boolean) => {
+      const previousValue = publishAlerts;
+      setPublishAlerts(checked);
+
+      try {
+        await persistPreferences({
+          defaultWorkspaceSlug,
+          defaultLandingPage,
+          emailInvites,
+          productUpdates,
+          publishAlerts: checked,
+          apiUsageAlerts,
+        });
+      } catch {
+        setPublishAlerts(previousValue);
+      }
+    },
+    [
+      apiUsageAlerts,
+      defaultLandingPage,
+      defaultWorkspaceSlug,
+      emailInvites,
+      persistPreferences,
+      productUpdates,
+      publishAlerts,
+    ],
+  );
+
+  const handleApiUsageAlertsChange = useCallback(
+    async (checked: boolean) => {
+      const previousValue = apiUsageAlerts;
+      setApiUsageAlerts(checked);
+
+      try {
+        await persistPreferences({
+          defaultWorkspaceSlug,
+          defaultLandingPage,
+          emailInvites,
+          productUpdates,
+          publishAlerts,
+          apiUsageAlerts: checked,
+        });
+      } catch {
+        setApiUsageAlerts(previousValue);
+      }
+    },
+    [
+      apiUsageAlerts,
+      defaultLandingPage,
+      defaultWorkspaceSlug,
+      emailInvites,
+      persistPreferences,
+      productUpdates,
+      publishAlerts,
+    ],
+  );
 
   const resetAccountDialog = () => {
     setDraftName(overview?.user.name ?? user.name);
@@ -450,7 +637,10 @@ function SettingsHub({
                   <Label htmlFor='default-workspace' className='text-xs text-muted-foreground'>
                     Default workspace
                   </Label>
-                  <Select value={defaultWorkspaceSlug} onValueChange={setDefaultWorkspaceSlug}>
+                  <Select
+                    value={defaultWorkspaceSlug}
+                    onValueChange={handleDefaultWorkspaceChange}
+                  >
                     <SelectTrigger id='default-workspace' className='w-full'>
                       <SelectValue placeholder='Choose' />
                     </SelectTrigger>
@@ -471,7 +661,9 @@ function SettingsHub({
                   </Label>
                   <Select
                     value={defaultLandingPage}
-                    onValueChange={(value) => setDefaultLandingPage(value as UserLandingPage)}
+                    onValueChange={(value) =>
+                      handleDefaultLandingPageChange(value as UserLandingPage)
+                    }
                   >
                     <SelectTrigger id='default-landing-page' className='w-full'>
                       <SelectValue />
@@ -492,45 +684,51 @@ function SettingsHub({
                   icon={<BellRing className='h-4 w-4' />}
                   title='Workspace invite emails'
                   description='Receive invite-related emails.'
-                  action={<Switch checked={emailInvites} onCheckedChange={setEmailInvites} />}
+                  action={
+                    <Switch
+                      checked={emailInvites}
+                      onCheckedChange={handleEmailInvitesChange}
+                    />
+                  }
                 />
                 <SettingRow
                   icon={<BellRing className='h-4 w-4' />}
                   title='Product updates'
                   description='Occasional product and release updates.'
-                  action={<Switch checked={productUpdates} onCheckedChange={setProductUpdates} />}
+                  action={
+                    <Switch
+                      checked={productUpdates}
+                      onCheckedChange={handleProductUpdatesChange}
+                    />
+                  }
                 />
                 <SettingRow
                   icon={<BellRing className='h-4 w-4' />}
                   title='Publishing alerts'
                   description='Publish-related notifications.'
-                  action={<Switch checked={publishAlerts} onCheckedChange={setPublishAlerts} />}
+                  action={
+                    <Switch
+                      checked={publishAlerts}
+                      onCheckedChange={handlePublishAlertsChange}
+                    />
+                  }
                 />
                 <SettingRow
                   icon={<BellRing className='h-4 w-4' />}
                   title='API usage alerts'
                   description='Notifications when API keys are used.'
-                  action={<Switch checked={apiUsageAlerts} onCheckedChange={setApiUsageAlerts} />}
+                  action={
+                    <Switch
+                      checked={apiUsageAlerts}
+                      onCheckedChange={handleApiUsageAlertsChange}
+                    />
+                  }
                 />
               </div>
 
-              <Button
-                size='sm'
-                onClick={() =>
-                  updatePreferencesMutation.mutate({
-                    defaultWorkspaceSlug:
-                      defaultWorkspaceSlug === 'none' ? undefined : defaultWorkspaceSlug,
-                    defaultLandingPage,
-                    emailInvites,
-                    productUpdates,
-                    publishAlerts,
-                    apiUsageAlerts,
-                  })
-                }
-                disabled={updatePreferencesMutation.isPending || !hasPreferenceChanges}
-              >
-                {updatePreferencesMutation.isPending ? 'Saving...' : 'Save preferences'}
-              </Button>
+              <p className='text-xs text-muted-foreground'>
+                Preference changes save automatically.
+              </p>
             </div>
           </SettingsSection>
 

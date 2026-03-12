@@ -89,8 +89,29 @@ export function useUpdateProfilePreferences() {
   const mutateRaw = useMutation(api.users.updatePreferences);
   const [isPending, setIsPending] = useState(false);
 
+  const mutateAsync = async (data: {
+    defaultWorkspaceSlug?: string;
+    defaultLandingPage: UserLandingPage;
+    emailInvites: boolean;
+    productUpdates: boolean;
+    publishAlerts: boolean;
+    apiUsageAlerts: boolean;
+  }) => {
+    setIsPending(true);
+    try {
+      await mutateRaw(data);
+      toast.success('Preferences updated');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to update preferences'));
+      throw error;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
   return {
     isPending,
+    mutateAsync,
     mutate: async (
       data: {
         defaultWorkspaceSlug?: string;
@@ -102,16 +123,11 @@ export function useUpdateProfilePreferences() {
       },
       options?: { onSuccess?: () => void; onError?: (error: unknown) => void },
     ) => {
-      setIsPending(true);
       try {
-        await mutateRaw(data);
-        toast.success('Preferences updated');
+        await mutateAsync(data);
         options?.onSuccess?.();
       } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to update preferences'));
         options?.onError?.(error);
-      } finally {
-        setIsPending(false);
       }
     },
   };
