@@ -25,6 +25,7 @@ import { FolderPlus, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 interface CreateWorkspaceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: (workspaceSlug: string) => void;
 }
 
 function sanitizeSlug(name: string): string {
@@ -40,6 +41,7 @@ function sanitizeSlug(name: string): string {
 export function CreateWorkspaceDialog({
   open,
   onOpenChange,
+  onCreated,
 }: CreateWorkspaceDialogProps) {
   const createWorkspace = useCreateWorkspace();
   const slugManuallyEditedRef = useRef(false);
@@ -100,6 +102,7 @@ export function CreateWorkspaceDialog({
       const response = await createWorkspace.mutateAsync(data);
 
       if (response?.slug) {
+        onCreated?.(response.slug);
         onOpenChange(false);
       }
     } catch (error: unknown) {

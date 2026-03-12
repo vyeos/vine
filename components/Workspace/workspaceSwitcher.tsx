@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { ChevronsUpDown, Settings } from "lucide-react";
+import { ChevronsUpDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { CreateWorkspaceDialog } from "@/components/Workspace/CreateWorkspaceDialog";
+import { UpdateWorkspaceDialog } from "@/components/Workspace/UpdateWorkspaceDialog";
+import { Button } from "@/components/ui/button";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -17,7 +20,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useUserWorkspaces } from "@/hooks/useWorkspace";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useDeleteWorkspace, useUserWorkspaces } from "@/hooks/useWorkspace";
 import {
   getLastWorkspaceSlugs,
   getWorkspacePath,
@@ -35,11 +46,24 @@ function RoleBadge({ role }: { role: string }) {
 
 export function WorkspaceSwitcher() {
   const [open, setOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [workspaceToUpdate, setWorkspaceToUpdate] = useState<{
+    slug: string;
+    name: string;
+  } | null>(null);
+  const [workspaceToDelete, setWorkspaceToDelete] = useState<{
+    id: string;
+    slug: string;
+    name: string;
+  } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams<{ workspaceSlug?: string }>();
   const workspaceSlug = params.workspaceSlug;
   const { data: workspaces = [], isLoading } = useUserWorkspaces();
+  const deleteWorkspace = useDeleteWorkspace();
   const { previous: lastUsedSlug } = getLastWorkspaceSlugs();
 
   const getCurrentRoutePath = () => {
@@ -74,6 +98,168 @@ export function WorkspaceSwitcher() {
 
   const getWorkspaceColor = (index: number) =>
     workspaceColors[index % workspaceColors.length];
+
+  const navigateToWorkspace = (slug: string) => {
+    updateLastWorkspaceCookie(slug);
+    const currentRoutePath = getCurrentRoutePath();
+    const targetPath = currentRoutePath
+      ? `${getWorkspacePath(slug)}${currentRoutePath}`
+      : getWorkspacePath(slug, "dashboard");
+    router.push(targetPath);
+  };
+
+  const handleCreateWorkspace = (slug: string) => {
+    setOpen(false);
+    navigateToWorkspace(slug);
+  };
+
+  const handleDeleteWorkspace = async () => {
+    if (!workspaceToDelete) return;
+
+    const isDeletingCurrentWorkspace = workspaceToDelete.slug === workspaceSlug;
+    const fallbackWorkspace = workspaces.find(
+      (workspace) => workspace.slug !== workspaceToDelete.slug,
+    );
+
+    try {
+      await deleteWorkspace.mutateAsync(workspaceToDelete.slug);
+      setDeleteDialogOpen(false);
+      setWorkspaceToDelete(null);
+      setOpen(false);
+
+      if (isDeletingCurrentWorkspace) {
+        if (fallbackWorkspace) {
+          navigateToWorkspace(fallbackWorkspace.slug);
+        } else {
+          router.push("/");
+        }
+      }
+    } catch {
+      return;
+    }
+  };
+
+  const workspaceList = (
+    <>
+      <DropdownMenuLabel className="text-xs text-muted-foreground">
+        Your Workspaces
+      </DropdownMenuLabel>
+      {workspaces.map((workspace) => {
+        const wsInitials = getInitials(workspace.name);
+        const wsIndex = workspaces.findIndex((item) => item.id === workspace.id);
+        const wsColor = getWorkspaceColor(wsIndex);
+        const isActive = workspace.id === currentWorkspace?.id;
+        const currentRoutePath = getCurrentRoutePath();
+        const targetPath = currentRoutePath
+          ? `${getWorkspacePath(workspace.slug)}${currentRoutePath}`
+          : getWorkspacePath(workspace.slug, "dashboard");
+
+        return (
+          <div
+            key={workspace.id}
+            className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${
+              isActive
+                ? "bg-primary/15 text-foreground ring-1 ring-primary/25"
+                : "hover:bg-accent"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                if (!isActive) {
+                  setOpen(false);
+                  updateLastWorkspaceCookie(workspace.slug);
+                  router.push(targetPath);
+                }
+              }}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-default"
+              disabled={isActive}
+            >
+              <div
+                className={`flex size-8 shrink-0 items-center justify-center rounded-md border ${wsColor}`}
+              >
+                <span className="text-sm font-bold text-background">
+                  {wsInitials}
+                </span>
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-sm font-medium">
+                    {workspace.name}
+                  </span>
+                  <RoleBadge role={workspace.role} />
+                  {workspace.slug === lastUsedSlug && (
+                    <Badge className="h-4 px-1.5 text-[10px]">
+                      Last used
+                    </Badge>
+                  )}
+                </div>
+                <span
+                  className={`truncate text-xs ${
+                    isActive ? "text-foreground/70" : "text-muted-foreground"
+                  }`}
+                >
+                  {workspace.slug}
+                </span>
+              </div>
+            </button>
+            {workspace.role === "owner" && (
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="shrink-0"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setOpen(false);
+                    setWorkspaceToUpdate({
+                      slug: workspace.slug,
+                      name: workspace.name,
+                    });
+                    setUpdateDialogOpen(true);
+                  }}
+                  aria-label={`Edit ${workspace.name}`}
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="shrink-0 text-destructive hover:text-destructive"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setOpen(false);
+                    setWorkspaceToDelete({
+                      id: workspace.id,
+                      slug: workspace.slug,
+                      name: workspace.name,
+                    });
+                    setDeleteDialogOpen(true);
+                  }}
+                  aria-label={`Delete ${workspace.name}`}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        onSelect={(event) => {
+          event.preventDefault();
+          setOpen(false);
+          setCreateDialogOpen(true);
+        }}
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        Create Workspace
+      </DropdownMenuItem>
+    </>
+  );
 
   if (isLoading) {
     return (
@@ -115,53 +301,62 @@ export function WorkspaceSwitcher() {
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-[280px]">
-              <DropdownMenuLabel>Your Workspaces</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {workspaces.map((workspace) => {
-                const currentRoutePath = getCurrentRoutePath();
-                const targetPath = currentRoutePath
-                  ? `${getWorkspacePath(workspace.slug)}${currentRoutePath}`
-                  : getWorkspacePath(workspace.slug, "dashboard");
-
-                return (
-                  <DropdownMenuItem
-                    key={workspace.id}
-                    onClick={() => {
-                      setOpen(false);
-                      router.push(targetPath);
-                    }}
-                    className="flex min-w-0 flex-col items-start gap-1.5"
-                  >
-                    <div className="flex w-full min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-medium">
-                        {workspace.name}
-                      </span>
-                      <RoleBadge role={workspace.role} />
-                      {workspace.slug === lastUsedSlug && (
-                        <Badge className="h-4 px-1.5 text-[10px]">
-                          Last used
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {workspace.slug}
-                    </span>
-                  </DropdownMenuItem>
-                );
-              })}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => {
-                  setOpen(false);
-                  router.push("/workspaces");
-                }}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Manage Workspaces
-              </DropdownMenuItem>
+              {workspaceList}
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
+
+        <CreateWorkspaceDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onCreated={handleCreateWorkspace}
+        />
+
+        {workspaceToUpdate && (
+          <UpdateWorkspaceDialog
+            open={updateDialogOpen}
+            onOpenChange={(nextOpen) => {
+              setUpdateDialogOpen(nextOpen);
+              if (!nextOpen) {
+                setWorkspaceToUpdate(null);
+              }
+            }}
+            workspaceSlug={workspaceToUpdate.slug}
+            currentName={workspaceToUpdate.name}
+          />
+        )}
+
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Workspace</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete &quot;{workspaceToDelete?.name}&quot;?
+                This action cannot be undone and will permanently delete all
+                workspace data including all posts, categories, tags, and authors.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setWorkspaceToDelete(null);
+                }}
+                disabled={deleteWorkspace.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteWorkspace}
+                disabled={deleteWorkspace.isPending}
+              >
+                {deleteWorkspace.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SidebarMenu>
     );
   }
@@ -208,73 +403,62 @@ export function WorkspaceSwitcher() {
             side="right"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Your Workspaces
-            </DropdownMenuLabel>
-            {workspaces.map((workspace) => {
-              const wsInitials = getInitials(workspace.name);
-              const wsIndex = workspaces.findIndex(
-                (item) => item.id === workspace.id,
-              );
-              const wsColor = getWorkspaceColor(wsIndex);
-              const isActive = workspace.id === currentWorkspace.id;
-              const currentRoutePath = getCurrentRoutePath();
-              const targetPath = currentRoutePath
-                ? `${getWorkspacePath(workspace.slug)}${currentRoutePath}`
-                : getWorkspacePath(workspace.slug, "dashboard");
-
-              return (
-                <DropdownMenuItem
-                  key={workspace.id}
-                  onClick={() => {
-                    if (!isActive) {
-                      setOpen(false);
-                      updateLastWorkspaceCookie(workspace.slug);
-                      router.push(targetPath);
-                    }
-                  }}
-                  className="gap-2 p-2"
-                  disabled={isActive}
-                >
-                  <div
-                    className={`flex size-8 items-center justify-center rounded-md border ${wsColor}`}
-                  >
-                    <span className="text-sm font-bold text-background">
-                      {wsInitials}
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-medium">
-                        {workspace.name}
-                      </span>
-                      <RoleBadge role={workspace.role} />
-                      {workspace.slug === lastUsedSlug && (
-                        <Badge className="h-4 px-1.5 text-[10px]">
-                          Last used
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {workspace.slug}
-                    </span>
-                  </div>
-                </DropdownMenuItem>
-              );
-            })}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                setOpen(false);
-                router.push("/workspaces");
-              }}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Manage Workspaces
-            </DropdownMenuItem>
+            {workspaceList}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+
+      <CreateWorkspaceDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreated={handleCreateWorkspace}
+      />
+
+      {workspaceToUpdate && (
+        <UpdateWorkspaceDialog
+          open={updateDialogOpen}
+          onOpenChange={(nextOpen) => {
+            setUpdateDialogOpen(nextOpen);
+            if (!nextOpen) {
+              setWorkspaceToUpdate(null);
+            }
+          }}
+          workspaceSlug={workspaceToUpdate.slug}
+          currentName={workspaceToUpdate.name}
+        />
+      )}
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Workspace</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{workspaceToDelete?.name}&quot;?
+              This action cannot be undone and will permanently delete all
+              workspace data including all posts, categories, tags, and authors.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setWorkspaceToDelete(null);
+              }}
+              disabled={deleteWorkspace.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteWorkspace}
+              disabled={deleteWorkspace.isPending}
+            >
+              {deleteWorkspace.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarMenu>
   );
 }
