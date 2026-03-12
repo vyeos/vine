@@ -1,39 +1,25 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import type { Post } from "@/types/post";
 
 const POST_EXCERPT_PREVIEW_LIMIT = 60;
 
-interface ColumnsProps {
-  onEdit?: (postSlug: string) => void;
-  onDelete?: (postSlug: string) => void;
-}
+export const POST_CUSTOMIZABLE_COLUMNS = [
+  { id: "author", label: "Author" },
+  { id: "category", label: "Category" },
+  { id: "tags", label: "Tags" },
+  { id: "createdAt", label: "Created" },
+  { id: "publishedAt", label: "Published" },
+] as const;
 
-export const createColumns = ({
-  onEdit,
-  onDelete,
-}: ColumnsProps = {}): ColumnDef<Post>[] => [
+export const createColumns = (): ColumnDef<Post>[] => [
   {
+    id: "title",
     accessorKey: "title",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
@@ -74,6 +60,7 @@ export const createColumns = ({
     },
   },
   {
+    id: "status",
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
@@ -89,6 +76,7 @@ export const createColumns = ({
     },
   },
   {
+    id: "author",
     accessorKey: "author",
     header: "Author",
     cell: ({ row }) => {
@@ -105,6 +93,7 @@ export const createColumns = ({
     },
   },
   {
+    id: "category",
     accessorKey: "category",
     header: "Category",
     cell: ({ row }) => {
@@ -121,6 +110,7 @@ export const createColumns = ({
     },
   },
   {
+    id: "tags",
     accessorKey: "tags",
     header: "Tags",
     cell: ({ row }) => {
@@ -145,6 +135,7 @@ export const createColumns = ({
     },
   },
   {
+    id: "createdAt",
     accessorKey: "createdAt",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
@@ -173,6 +164,7 @@ export const createColumns = ({
     },
   },
   {
+    id: "publishedAt",
     accessorKey: "publishedAt",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
@@ -203,51 +195,6 @@ export const createColumns = ({
             <span className="text-muted-foreground">—</span>
           )}
         </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const post = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="h-8 w-8 p-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => {
-                if (onEdit) {
-                  onEdit(post.slug);
-                }
-              }}
-            >
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                if (onDelete) {
-                  onDelete(post.slug);
-                }
-              }}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       );
     },
   },

@@ -6,6 +6,7 @@ import type {
   ColumnFiltersState,
   RowSelectionState,
   SortingState,
+  VisibilityState,
 } from '@tanstack/react-table';
 import {
   flexRender,
@@ -18,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -27,10 +29,64 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Plus, Trash2, FileDown } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  FileDown,
+  Plus,
+  Settings2,
+  Trash2,
+} from 'lucide-react';
+
+const SELECTION_COLUMN_ID = 'select';
+
+type CustomizableColumn = {
+  id: string;
+  label: string;
+  defaultVisible?: boolean;
+};
+
+type StoredColumnPreferences = {
+  order?: string[];
+  visibility?: Record<string, boolean>;
+};
+
+function getColumnId<TData, TValue>(
+  column: ColumnDef<TData, TValue>,
+  index: number,
+) {
+  if ('id' in column && typeof column.id === 'string') {
+    return column.id;
+  }
+
+  if ('accessorKey' in column && typeof column.accessorKey === 'string') {
+    return column.accessorKey;
+  }
+
+  return `column-${index}`;
+}
+
+function readStoredColumnPreferences(storageKey?: string) {
+  if (!storageKey || typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) {
+      return null;
+    }
+
+    return JSON.parse(raw) as StoredColumnPreferences;
+  } catch {
+    return null;
+  }
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
+  customizableColumns?: CustomizableColumn[];
+  columnPreferencesKey?: string;
   data: TData[];
   onNewPost?: () => void;
   onImportMarkdown?: () => void;
@@ -41,6 +97,8 @@ interface DataTableProps<TData, TValue> {
 
 export function DataTable<TData, TValue>({
   columns,
+  customizableColumns = [],
+  columnPreferencesKey,
   data,
   onNewPost,
   onImportMarkdown,
@@ -48,42 +106,142 @@ export function DataTable<TData, TValue>({
   onDeleteSelected,
   getRowSlug,
 }: DataTableProps<TData, TValue>) {
+  const customizableColumnIds = React.useMemo(
+    () => customizableColumns.map((column) => column.id),
+    [customizableColumns],
+  );
+  const defaultColumnVisibility = React.useMemo<VisibilityState>(
+    () =>
+      Object.fromEntries(
+        customizableColumns.map((column) => [
+          column.id,
+          column.defaultVisible ?? true,
+        ]),
+      ),
+    [customizableColumns],
+  );
+  const storedPreferences = React.useMemo(
+    () => readStoredColumnPreferences(columnPreferencesKey),
+    [columnPreferencesKey],
+  );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(
+    () => ({
+      ...defaultColumnVisibility,
+      ...(storedPreferences?.visibility ?? {}),
+    }),
+  );
+  const [customColumnOrder, setCustomColumnOrder] = React.useState<string[]>(
+    () => storedPreferences?.order ?? customizableColumnIds,
+  );
 
-  const selectionColumn: ColumnDef<TData, unknown> = {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label='Select all'
-        onClick={(e) => e.stopPropagation()}
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label='Select row'
-        onClick={(e) => e.stopPropagation()}
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  };
+  const selectionColumn = React.useMemo<ColumnDef<TData, unknown>>(
+    () => ({
+      id: SELECTION_COLUMN_ID,
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label='Select row'
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }),
+    [],
+  );
+
+  const allColumns = React.useMemo(
+    () => [selectionColumn, ...columns],
+    [columns, selectionColumn],
+  );
+  const dataColumnIds = React.useMemo(
+    () => columns.map((column, index) => getColumnId(column, index)),
+    [columns],
+  );
+  const fixedColumnIds = React.useMemo(
+    () =>
+      dataColumnIds.filter((columnId) => !customizableColumnIds.includes(columnId)),
+    [customizableColumnIds, dataColumnIds],
+  );
+  const orderedCustomizableColumns = React.useMemo(() => {
+    const visibleCustomIds = customColumnOrder.filter((columnId) =>
+      customizableColumnIds.includes(columnId),
+    );
+    const missingIds = customizableColumnIds.filter(
+      (columnId) => !visibleCustomIds.includes(columnId),
+    );
+    const orderedIds = [...visibleCustomIds, ...missingIds];
+
+    return orderedIds
+      .map((columnId) =>
+        customizableColumns.find((column) => column.id === columnId),
+      )
+      .filter((column): column is CustomizableColumn => column !== undefined);
+  }, [customColumnOrder, customizableColumnIds, customizableColumns]);
+  const effectiveColumnOrder = React.useMemo(
+    () => [
+      SELECTION_COLUMN_ID,
+      ...fixedColumnIds,
+      ...orderedCustomizableColumns.map((column) => column.id),
+    ],
+    [fixedColumnIds, orderedCustomizableColumns],
+  );
+  const effectiveColumnVisibility = React.useMemo(
+    () => ({
+      ...defaultColumnVisibility,
+      ...columnVisibility,
+    }),
+    [columnVisibility, defaultColumnVisibility],
+  );
+
+  React.useEffect(() => {
+    if (!columnPreferencesKey || typeof window === 'undefined') {
+      return;
+    }
+
+    const storedVisibility = orderedCustomizableColumns.reduce<
+      Record<string, boolean>
+    >((acc, column) => {
+      acc[column.id] = effectiveColumnVisibility[column.id] !== false;
+      return acc;
+    }, {});
+
+    window.localStorage.setItem(
+      columnPreferencesKey,
+      JSON.stringify({
+        order: orderedCustomizableColumns.map((column) => column.id),
+        visibility: storedVisibility,
+      } satisfies StoredColumnPreferences),
+    );
+  }, [
+    columnPreferencesKey,
+    effectiveColumnVisibility,
+    orderedCustomizableColumns,
+  ]);
 
   const table = useReactTable({
     data,
-    columns: [selectionColumn, ...columns],
+    columns: allColumns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -92,6 +250,8 @@ export function DataTable<TData, TValue>({
     state: {
       sorting,
       columnFilters,
+      columnOrder: effectiveColumnOrder,
+      columnVisibility: effectiveColumnVisibility,
       rowSelection,
     },
   });
@@ -112,6 +272,44 @@ export function DataTable<TData, TValue>({
       onDeleteSelected(selectedSlugs);
     }
   };
+
+  const handleVisibilityChange = React.useCallback((columnId: string) => {
+    setColumnVisibility((current) => ({
+      ...current,
+      [columnId]: current[columnId] === false,
+    }));
+  }, []);
+
+  const handleMoveColumn = React.useCallback(
+    (columnId: string, direction: 'up' | 'down') => {
+      setCustomColumnOrder((current) => {
+        const normalized = [
+          ...current.filter((id) => customizableColumnIds.includes(id)),
+          ...customizableColumnIds.filter((id) => !current.includes(id)),
+        ];
+        const fromIndex = normalized.indexOf(columnId);
+        if (fromIndex === -1) {
+          return normalized;
+        }
+
+        const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+        if (toIndex < 0 || toIndex >= normalized.length) {
+          return normalized;
+        }
+
+        const next = [...normalized];
+        const [movedColumn] = next.splice(fromIndex, 1);
+        next.splice(toIndex, 0, movedColumn);
+        return next;
+      });
+    },
+    [customizableColumnIds],
+  );
+
+  const resetColumnPreferences = React.useCallback(() => {
+    setColumnVisibility(defaultColumnVisibility);
+    setCustomColumnOrder(customizableColumnIds);
+  }, [customizableColumnIds, defaultColumnVisibility]);
 
   return (
     <div className='space-y-4'>
@@ -135,6 +333,88 @@ export function DataTable<TData, TValue>({
           </Button>
         )}
         <div className='flex items-center gap-2 ml-auto'>
+          {orderedCustomizableColumns.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant='outline' className='whitespace-nowrap'>
+                  <Settings2 size={16} className='mr-1' />
+                  Customize Columns
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align='end' className='w-80 p-0'>
+                <div className='border-b px-4 py-3'>
+                  <div className='flex items-start justify-between gap-3'>
+                    <div>
+                      <p className='text-sm font-semibold'>Table columns</p>
+                      <p className='text-xs text-muted-foreground'>
+                        Show, hide, and reorder the optional post properties.
+                      </p>
+                    </div>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='h-7 px-2'
+                      onClick={resetColumnPreferences}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+                <div className='max-h-80 space-y-1 overflow-y-auto p-2'>
+                  {orderedCustomizableColumns.map((column, index) => {
+                    const isVisible =
+                      effectiveColumnVisibility[column.id] !== false;
+
+                    return (
+                      <div
+                        key={column.id}
+                        className='flex items-center gap-2 rounded-md px-2 py-2 hover:bg-muted/50'
+                      >
+                        <Checkbox
+                          id={`column-${column.id}`}
+                          checked={isVisible}
+                          onCheckedChange={() =>
+                            handleVisibilityChange(column.id)
+                          }
+                          aria-label={`Toggle ${column.label} column`}
+                        />
+                        <label
+                          htmlFor={`column-${column.id}`}
+                          className='flex-1 cursor-pointer text-sm font-medium'
+                        >
+                          {column.label}
+                        </label>
+                        <div className='flex items-center gap-1'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon-sm'
+                            onClick={() => handleMoveColumn(column.id, 'up')}
+                            disabled={index === 0}
+                            aria-label={`Move ${column.label} up`}
+                          >
+                            <ArrowUp />
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon-sm'
+                            onClick={() => handleMoveColumn(column.id, 'down')}
+                            disabled={
+                              index === orderedCustomizableColumns.length - 1
+                            }
+                            aria-label={`Move ${column.label} down`}
+                          >
+                            <ArrowDown />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
           {onImportMarkdown && (
             <Button
               variant='outline'

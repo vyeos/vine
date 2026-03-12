@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -32,7 +32,7 @@ import { useWorkspaceSlug } from '@/hooks/useWorkspaceSlug';
 import { useWorkspacePosts, useDeletePost } from '@/hooks/usePost';
 import { DataTable } from './data-table';
 import { ImportMarkdownDialog } from './ImportMarkdownDialog';
-import { createColumns } from './columns';
+import { createColumns, POST_CUSTOMIZABLE_COLUMNS } from './columns';
 import type { Post } from '@/types/post';
 import { getWorkspacePath } from '@/lib/utils';
 
@@ -62,20 +62,12 @@ export default function PostsManager() {
     router.push(getWorkspacePath(workspaceSlug, `editor/${postSlug}`));
   };
 
-  const handleDelete = (postSlug: string) => {
-    setPendingDeleteSlugs([postSlug]);
-    setIsDeleteOpen(true);
-  };
-
   const handleDeleteSelected = (postSlugs: string[]) => {
     setPendingDeleteSlugs(postSlugs);
     setIsDeleteOpen(true);
   };
 
-  const tableColumns = createColumns({
-    onEdit: handleEdit,
-    onDelete: handleDelete,
-  });
+  const tableColumns = useMemo(() => createColumns(), []);
 
   const confirmDelete = async () => {
     if (pendingDeleteSlugs.length === 0) return;
@@ -186,6 +178,10 @@ export default function PostsManager() {
             ) : (
               <DataTable
                 columns={tableColumns}
+                customizableColumns={POST_CUSTOMIZABLE_COLUMNS.map((column) => ({
+                  ...column,
+                }))}
+                columnPreferencesKey={`posts-table:${workspaceSlug}`}
                 data={posts}
                 onNewPost={handleNewPost}
                 onImportMarkdown={() => setIsImportOpen(true)}
