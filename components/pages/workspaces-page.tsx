@@ -55,9 +55,9 @@ export function WorkspacesPage() {
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-wrap justify-center gap-6">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="space-y-4">
+                  <div key={index} className="w-full max-w-[172px] space-y-4">
                     <Skeleton className="aspect-square w-full rounded-4xl" />
                     <Skeleton className="mx-auto h-5 w-40 rounded-md" />
                     <Skeleton className="mx-auto h-4 w-24 rounded-md" />
@@ -65,7 +65,7 @@ export function WorkspacesPage() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 justify-center gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-wrap justify-center gap-3.5">
                 {workspaces.map((workspace, index) => (
                   <button
                     key={workspace.id}
@@ -73,7 +73,7 @@ export function WorkspacesPage() {
                     onClick={() =>
                       router.push(getWorkspacePath(workspace.slug))
                     }
-                    className="group flex flex-col items-center text-center"
+                    className="group flex w-full max-w-[172px] flex-col items-center text-center"
                   >
                     <div
                       className={`flex aspect-square w-full max-w-[172px] items-center justify-center rounded-[1.35rem] border border-border/40 transition-all duration-150 group-hover:scale-[1.05] group-hover:border-border/80 ${workspaceSurfaceClasses[index % workspaceSurfaceClasses.length]}`}
@@ -101,7 +101,7 @@ export function WorkspacesPage() {
                 <button
                   type="button"
                   onClick={() => setCreateDialogOpen(true)}
-                  className="group flex flex-col items-center text-center"
+                  className="group flex w-full max-w-[172px] flex-col items-center text-center"
                 >
                   <div className="flex aspect-square w-full max-w-[172px] items-center justify-center rounded-[1.35rem] border-2 border-dashed border-border/70 bg-card/40 text-muted-foreground transition-all duration-150  group-hover:border-primary/50 group-hover:bg-card/70 group-hover:text-foreground">
                     <Plus className="h-10 w-10 stroke-[1.5] group-hover:text-primary transition-colors duration-150" />
