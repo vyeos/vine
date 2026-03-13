@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getLastWorkspaceSlugs, getWorkspacePath } from '@/lib/utils';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -60,7 +62,12 @@ export function GoogleSignInForm() {
                 setError(null);
                 startTransition(async () => {
                   try {
-                    await signIn('google', { redirectTo: '/workspaces' });
+                    const { current: lastUsedWorkspaceSlug } = getLastWorkspaceSlugs();
+                    const redirectTo = lastUsedWorkspaceSlug
+                      ? getWorkspacePath(lastUsedWorkspaceSlug, 'dashboard')
+                      : '/';
+
+                    await signIn('google', { redirectTo });
                   } catch {
                     setError(
                       'Unable to sign in. Please check your connection and try again.',
@@ -78,13 +85,19 @@ export function GoogleSignInForm() {
       </Card>
       <div className='text-muted-foreground text-center text-xs text-balance'>
         By clicking continue, you agree to our{' '}
-        <a className='underline underline-offset-4 transition-colors hover:text-foreground' href='/terms'>
+        <Link
+          className='underline underline-offset-4 transition-colors hover:text-foreground'
+          href='/terms'
+        >
           Terms of Service
-        </a>{' '}
+        </Link>{' '}
         and{' '}
-        <a className='underline underline-offset-4 transition-colors hover:text-foreground' href='/privacy'>
+        <Link
+          className='underline underline-offset-4 transition-colors hover:text-foreground'
+          href='/privacy'
+        >
           Privacy Policy
-        </a>
+        </Link>
         .
       </div>
     </div>

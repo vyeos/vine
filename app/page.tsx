@@ -1,16 +1,30 @@
+import { redirect } from 'next/navigation';
+import { isAuthenticatedNextjs } from '@convex-dev/auth/nextjs/server';
+import { AuthenticatedWorkspaceRedirect } from '@/components/authenticated-workspace-redirect';
 import { Cta } from '@/components/cta';
 import FAQ from '@/components/faq';
 import Features from '@/components/features';
 import Footer from '@/components/footer';
 import Hero from '@/components/hero';
 import Navbar from '@/components/navbar';
+import { getViewerDashboardDestination } from '@/lib/server-navigation';
 import {
   generateStructuredData,
   generateOrganizationData,
   generateWebSiteData,
 } from '@/lib/structured-data';
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+  if (await isAuthenticatedNextjs()) {
+    const destination = await getViewerDashboardDestination();
+
+    if (destination) {
+      redirect(destination);
+    }
+  }
+
   const structuredData = [
     generateStructuredData(),
     generateOrganizationData(),
@@ -19,6 +33,7 @@ export default function HomePage() {
 
   return (
     <main className='min-h-screen bg-background text-foreground'>
+      <AuthenticatedWorkspaceRedirect />
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

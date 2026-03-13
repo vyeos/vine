@@ -137,7 +137,7 @@ export default function MemberManager() {
   const handleLeave = () => {
     leaveWorkspaceMutation.mutate(undefined, {
       onSuccess: () => {
-        router.push('/workspaces');
+        router.push('/');
       },
     });
   };

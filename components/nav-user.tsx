@@ -69,7 +69,7 @@ export function NavUser({
                   router.push(
                     workspaceSlug
                       ? getWorkspacePath(workspaceSlug, 'settings')
-                      : '/workspaces',
+                      : '/',
                   )
                 }
                 className='flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent'

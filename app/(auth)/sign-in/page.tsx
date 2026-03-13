@@ -1,15 +1,20 @@
 import { redirect } from 'next/navigation';
 import { isAuthenticatedNextjs } from '@convex-dev/auth/nextjs/server';
 import Image from 'next/image';
+import { AuthenticatedWorkspaceRedirect } from '@/components/authenticated-workspace-redirect';
 import { GoogleSignInForm } from '@/components/google-sign-in-form';
+import { getViewerDashboardDestination } from '@/lib/server-navigation';
+
+export const dynamic = 'force-dynamic';
 
 export default async function SignInPage() {
   if (await isAuthenticatedNextjs()) {
-    redirect('/workspaces');
+    redirect((await getViewerDashboardDestination()) ?? '/');
   }
 
   return (
     <div className='grid h-screen w-screen place-items-center bg-muted/30 p-4'>
+      <AuthenticatedWorkspaceRedirect />
       <div className='flex w-full max-w-sm flex-col items-center gap-8'>
         <div className='flex items-center gap-3'>
           <Image

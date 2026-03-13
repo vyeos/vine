@@ -1,5 +1,8 @@
 import { redirect } from 'next/navigation';
+import { getViewerPreferredDestination } from '@/lib/server-navigation';
 
-export default function SettingsRoutePage() {
-  redirect('/workspaces');
+export const dynamic = 'force-dynamic';
+
+export default async function SettingsRoutePage() {
+  redirect((await getViewerPreferredDestination()) ?? '/');
 }

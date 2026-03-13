@@ -49,17 +49,23 @@ export function deleteCookie(name: string, options?: { path?: string }) {
   document.cookie = `${name}=; Max-Age=0; Path=${path}`;
 }
 
-export function getLastWorkspaceSlugs(): {
+export function parseLastWorkspaceSlugs(raw?: string): {
   current?: string;
   previous?: string;
 } {
-  const raw = getCookie(LAST_WORKSPACE_COOKIE);
   if (!raw) {
     return {};
   }
 
   const [current, previous] = raw.split(',').filter(Boolean);
   return { current, previous };
+}
+
+export function getLastWorkspaceSlugs(): {
+  current?: string;
+  previous?: string;
+} {
+  return parseLastWorkspaceSlugs(getCookie(LAST_WORKSPACE_COOKIE));
 }
 
 export function updateLastWorkspaceCookie(nextCurrentSlug: string) {
@@ -98,14 +104,4 @@ export function getWorkspacePathSuffix(
   }
 
   return '';
-}
-
-export function getLegacyDashboardPath(
-  workspaceSlug: string,
-  subpath = '',
-) {
-  const normalizedSubpath = subpath.replace(/^\/+|\/+$/g, '');
-  return normalizedSubpath
-    ? `/dashboard/${workspaceSlug}/${normalizedSubpath}`
-    : `/dashboard/${workspaceSlug}`;
 }

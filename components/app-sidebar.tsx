@@ -37,14 +37,14 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     ...item,
     url: workspaceSlug
       ? getWorkspacePath(workspaceSlug, item.url)
-      : '/workspaces',
+      : '/',
   }));
 
   const navDeveloperItems = developerItems.map((item) => ({
     ...item,
     url: workspaceSlug
       ? getWorkspacePath(workspaceSlug, item.url)
-      : '/workspaces',
+      : '/',
   }));
 
   return (
