@@ -28,12 +28,14 @@ async function getMembershipBySlug(
     return { workspace: null, membership: null };
   }
 
-  const membership = await ctx.db
+  const memberships = await ctx.db
     .query('workspaceMembers')
     .withIndex('by_workspace_id_and_user_id', (q: any) =>
       q.eq('workspaceId', workspace._id).eq('userId', userId),
     )
-    .unique();
+    .collect();
+
+  const membership = memberships.sort((a: any, b: any) => a.joinedAt - b.joinedAt)[0] ?? null;
 
   return { workspace, membership };
 }

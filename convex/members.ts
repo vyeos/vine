@@ -200,12 +200,17 @@ export const acceptInvite = mutation({
       throw new Error('Workspace not found');
     }
 
-    const existingMembership = await ctx.db
+    const membershipRecords = await ctx.db
       .query('workspaceMembers')
       .withIndex('by_workspace_id_and_user_id', (q: any) =>
         q.eq('workspaceId', workspace._id).eq('userId', userId),
       )
-      .unique();
+      .collect();
+
+    const sortedMemberships = membershipRecords.sort(
+      (a: any, b: any) => a.joinedAt - b.joinedAt,
+    );
+    const existingMembership = sortedMemberships[0] ?? null;
 
     if (invitation.status === 'accepted') {
       if (!existingMembership) {
@@ -230,6 +235,10 @@ export const acceptInvite = mutation({
     if (invitation.expiresAt && invitation.expiresAt < Date.now()) {
       await ctx.db.patch(invitation._id, { status: 'expired' });
       throw new Error('This invitation has expired');
+    }
+
+    for (const duplicateMembership of sortedMemberships.slice(1)) {
+      await ctx.db.delete(duplicateMembership._id);
     }
 
     if (!existingMembership) {

@@ -31,7 +31,7 @@ function getValidWorkspaceSlug(
 
 function getWorkspaceAppDestination(workspaceSlug: string | undefined) {
   if (!workspaceSlug) {
-    return null;
+    return '/workspaces';
   }
 
   return getWorkspacePath(workspaceSlug, DEFAULT_WORKSPACE_ROUTE);
