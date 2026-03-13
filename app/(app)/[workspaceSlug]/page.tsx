@@ -1,14 +1,10 @@
-import { redirect } from 'next/navigation';
-import { DEFAULT_WORKSPACE_ROUTE } from '@/lib/navigation';
-import { getWorkspacePath } from '@/lib/utils';
+import type { Metadata } from 'next';
+import { DashboardPage } from '@/components/pages/dashboard-page';
 
-export const dynamic = 'force-dynamic';
+export const metadata: Metadata = {
+  title: 'Dashboard',
+};
 
-export default async function WorkspaceIndexRedirect({
-  params,
-}: {
-  params: Promise<{ workspaceSlug: string }>;
-}) {
-  const { workspaceSlug } = await params;
-  redirect(getWorkspacePath(workspaceSlug, DEFAULT_WORKSPACE_ROUTE));
+export default function WorkspaceDashboardPage() {
+  return <DashboardPage />;
 }

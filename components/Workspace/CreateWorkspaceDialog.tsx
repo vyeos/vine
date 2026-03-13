@@ -202,7 +202,7 @@ export function CreateWorkspaceDialog({
                     <p className='text-xs text-muted-foreground'>
                       Your workspace will be accessible at:{' '}
                       <code className='rounded bg-muted px-1.5 py-0.5 text-xs font-mono'>
-                        /{slugValue}/dashboard
+                        /{slugValue}
                       </code>
                     </p>
                   )}

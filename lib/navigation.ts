@@ -1,1 +1,1 @@
-export const DEFAULT_WORKSPACE_ROUTE = 'posts' as const;
+export const DEFAULT_WORKSPACE_ROUTE = '' as const;

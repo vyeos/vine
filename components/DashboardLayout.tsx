@@ -32,7 +32,10 @@ const pageTitles: Record<string, string> = {
 const APP_SIDEBAR_COOKIE_NAME = 'app_sidebar_state_v2';
 
 function getPageTitle(pathname: string, workspaceSlug: string): string {
-  const prefix = `/${workspaceSlug}/`;
+  const basePath = getWorkspacePath(workspaceSlug);
+  if (pathname === basePath) return 'Dashboard';
+
+  const prefix = `${basePath}/`;
   if (!pathname.startsWith(prefix)) return '';
   const segment = pathname.slice(prefix.length).split('/')[0];
   return pageTitles[segment] ?? '';
