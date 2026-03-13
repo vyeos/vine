@@ -4,12 +4,11 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { useAuthActions } from '@convex-dev/auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { DEFAULT_WORKSPACE_ROUTE } from '@/lib/navigation';
-import { getLastWorkspaceSlugs, getWorkspacePath } from '@/lib/utils';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -36,8 +35,18 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export function GoogleSignInForm() {
   const { signIn } = useAuthActions();
+  const { data: user, isLoading } = useAuth();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  if (user || isLoading) {
+    return (
+      <div className='flex min-h-40 w-full items-center justify-center gap-3 rounded-xl border bg-card px-6 py-10 text-sm text-muted-foreground shadow-sm'>
+        <Spinner className='size-5' />
+        Redirecting you to your workspace...
+      </div>
+    );
+  }
 
   return (
     <div className='flex w-full flex-col gap-6'>
@@ -63,12 +72,7 @@ export function GoogleSignInForm() {
                 setError(null);
                 startTransition(async () => {
                   try {
-                    const { current: lastUsedWorkspaceSlug } = getLastWorkspaceSlugs();
-                    const redirectTo = lastUsedWorkspaceSlug
-                      ? getWorkspacePath(lastUsedWorkspaceSlug, DEFAULT_WORKSPACE_ROUTE)
-                      : '/';
-
-                    await signIn('google', { redirectTo });
+                    await signIn('google', { redirectTo: '/sign-in' });
                   } catch {
                     setError(
                       'Unable to sign in. Please check your connection and try again.',
