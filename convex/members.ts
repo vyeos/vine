@@ -314,7 +314,7 @@ export const sendInviteEmail = action({
                 Accept invitation
               </a>
             </p>
-            <p style="margin: 0 0 12px; font-size: 14px; color: #4b5563;">If the button does not work, use this link:</p>
+            <p style="margin: 0 0 12px; font-size: 14px; color: #4b5563;">If the button does not work, open Vine, choose Join Workspace in the sidebar workspace switcher, or use this link directly:</p>
             <p style="margin: 0 0 16px; font-size: 14px; word-break: break-all;">
               <a href="${acceptUrl.toString()}" style="color: #2563eb;">${acceptUrl.toString()}</a>
             </p>

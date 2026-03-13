@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { ChevronsUpDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronsUpDown, Link2, Pencil, Plus, Trash2 } from "lucide-react";
 import { CreateWorkspaceDialog } from "@/components/Workspace/CreateWorkspaceDialog";
+import { JoinWorkspaceDialog } from "@/components/Workspace/JoinWorkspaceDialog";
 import { UpdateWorkspaceDialog } from "@/components/Workspace/UpdateWorkspaceDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,7 @@ function RoleBadge({ role }: { role: string }) {
 
 export function WorkspaceSwitcher() {
   const [open, setOpen] = useState(false);
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -252,6 +254,16 @@ export function WorkspaceSwitcher() {
         onSelect={(event) => {
           event.preventDefault();
           setOpen(false);
+          setJoinDialogOpen(true);
+        }}
+      >
+        <Link2 className="mr-2 h-4 w-4" />
+        Join Workspace
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        onSelect={(event) => {
+          event.preventDefault();
+          setOpen(false);
           setCreateDialogOpen(true);
         }}
       >
@@ -261,152 +273,12 @@ export function WorkspaceSwitcher() {
     </>
   );
 
-  if (isLoading) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            size="lg"
-            className="h-14 w-full justify-center group-data-[state=expanded]:justify-start"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted" />
-            <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
-              <span className="truncate font-medium">Loading...</span>
-              <span className="truncate text-xs">Please wait</span>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
-
-  if (!currentWorkspace) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <DropdownMenu open={open} onOpenChange={setOpen}>
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                size="lg"
-                className="h-14 w-full justify-center group-data-[state=expanded]:justify-start"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <span className="text-sm font-semibold">?</span>
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
-                  <span className="truncate font-medium">Select Workspace</span>
-                  <span className="truncate text-xs">Choose a workspace</span>
-                </div>
-                <ChevronsUpDown className="ml-auto group-data-[state=collapsed]:hidden" />
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[280px]">
-              {workspaceList}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </SidebarMenuItem>
-
-        <CreateWorkspaceDialog
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-          onCreated={handleCreateWorkspace}
-        />
-
-        {workspaceToUpdate && (
-          <UpdateWorkspaceDialog
-            open={updateDialogOpen}
-            onOpenChange={(nextOpen) => {
-              setUpdateDialogOpen(nextOpen);
-              if (!nextOpen) {
-                setWorkspaceToUpdate(null);
-              }
-            }}
-            workspaceSlug={workspaceToUpdate.slug}
-            currentName={workspaceToUpdate.name}
-          />
-        )}
-
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Workspace</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete &quot;{workspaceToDelete?.name}&quot;?
-                This action cannot be undone and will permanently delete all
-                workspace data including all posts, categories, tags, and authors.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setDeleteDialogOpen(false);
-                  setWorkspaceToDelete(null);
-                }}
-                disabled={deleteWorkspace.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteWorkspace}
-                disabled={deleteWorkspace.isPending}
-              >
-                {deleteWorkspace.isPending ? "Deleting..." : "Delete"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </SidebarMenu>
-    );
-  }
-
-  const initials = getInitials(currentWorkspace.name);
-  const currentIndex = workspaces.findIndex(
-    (workspace) => workspace.id === currentWorkspace.id,
-  );
-  const colorClass = getWorkspaceColor(currentIndex);
-
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="h-14 w-full justify-center data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:justify-start"
-            >
-              <div
-                className={`flex aspect-square h-10 w-10 items-center justify-center rounded-lg ${colorClass}`}
-              >
-                <span className="text-sm font-bold text-background">
-                  {initials}
-                </span>
-              </div>
-              <div className="grid min-w-0 flex-1 gap-1.5 text-left leading-relaxed group-data-[state=collapsed]:hidden">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-sm font-medium">
-                    {currentWorkspace.name}
-                  </span>
-                  <RoleBadge role={currentWorkspace.role} />
-                </div>
-                <span className="truncate text-xs text-muted-foreground">
-                  {currentWorkspace.slug}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-auto group-data-[state=collapsed]:hidden" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            align="start"
-            side="right"
-            sideOffset={4}
-          >
-            {workspaceList}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
+  const workspaceDialogs = (
+    <>
+      <JoinWorkspaceDialog
+        open={joinDialogOpen}
+        onOpenChange={setJoinDialogOpen}
+      />
 
       <CreateWorkspaceDialog
         open={createDialogOpen}
@@ -459,6 +331,105 @@ export function WorkspaceSwitcher() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </>
+  );
+
+  if (isLoading) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            className="h-14 w-full justify-center group-data-[state=expanded]:justify-start"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted" />
+            <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
+              <span className="truncate font-medium">Loading...</span>
+              <span className="truncate text-xs">Please wait</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  if (!currentWorkspace) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="h-14 w-full justify-center group-data-[state=expanded]:justify-start"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                  <span className="text-sm font-semibold">?</span>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
+                  <span className="truncate font-medium">Select Workspace</span>
+                  <span className="truncate text-xs">Choose a workspace</span>
+                </div>
+                <ChevronsUpDown className="ml-auto group-data-[state=collapsed]:hidden" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[280px]">
+              {workspaceList}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+        {workspaceDialogs}
+      </SidebarMenu>
+    );
+  }
+
+  const initials = getInitials(currentWorkspace.name);
+  const currentIndex = workspaces.findIndex(
+    (workspace) => workspace.id === currentWorkspace.id,
+  );
+  const colorClass = getWorkspaceColor(currentIndex);
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="h-14 w-full justify-center data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:justify-start"
+            >
+              <div
+                className={`flex aspect-square h-10 w-10 items-center justify-center rounded-lg ${colorClass}`}
+              >
+                <span className="text-sm font-bold text-background">
+                  {initials}
+                </span>
+              </div>
+              <div className="grid min-w-0 flex-1 gap-1.5 text-left leading-relaxed group-data-[state=collapsed]:hidden">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-sm font-medium">
+                    {currentWorkspace.name}
+                  </span>
+                  <RoleBadge role={currentWorkspace.role} />
+                </div>
+                <span className="truncate text-xs text-muted-foreground">
+                  {currentWorkspace.slug}
+                </span>
+              </div>
+              <ChevronsUpDown className="ml-auto group-data-[state=collapsed]:hidden" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            align="start"
+            side="right"
+            sideOffset={4}
+          >
+            {workspaceList}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+      {workspaceDialogs}
     </SidebarMenu>
   );
 }
