@@ -7,7 +7,7 @@ import Features from '@/components/features';
 import Footer from '@/components/footer';
 import Hero from '@/components/hero';
 import Navbar from '@/components/navbar';
-import { getViewerDashboardDestination } from '@/lib/server-navigation';
+import { getViewerAppDestination } from '@/lib/server-navigation';
 import {
   generateStructuredData,
   generateOrganizationData,
@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   if (await isAuthenticatedNextjs()) {
-    const destination = await getViewerDashboardDestination();
+    const destination = await getViewerAppDestination();
 
     if (destination) {
       redirect(destination);

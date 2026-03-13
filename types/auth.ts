@@ -20,11 +20,7 @@ export type User = {
   authProvider?: 'google';
 };
 
-export type UserLandingPage = 'dashboard' | 'posts' | 'media' | 'keys';
-
 export type UserPreferences = {
-  defaultWorkspaceSlug?: string;
-  defaultLandingPage: UserLandingPage;
   emailInvites: boolean;
   productUpdates: boolean;
   publishAlerts: boolean;

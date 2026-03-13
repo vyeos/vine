@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DEFAULT_WORKSPACE_ROUTE } from '@/lib/navigation';
 import { getLastWorkspaceSlugs, getWorkspacePath } from '@/lib/utils';
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -64,7 +65,7 @@ export function GoogleSignInForm() {
                   try {
                     const { current: lastUsedWorkspaceSlug } = getLastWorkspaceSlugs();
                     const redirectTo = lastUsedWorkspaceSlug
-                      ? getWorkspacePath(lastUsedWorkspaceSlug, 'dashboard')
+                      ? getWorkspacePath(lastUsedWorkspaceSlug, DEFAULT_WORKSPACE_ROUTE)
                       : '/';
 
                     await signIn('google', { redirectTo });

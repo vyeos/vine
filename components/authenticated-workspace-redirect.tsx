@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { DEFAULT_WORKSPACE_ROUTE } from '@/lib/navigation';
 import { getLastWorkspaceSlugs, getWorkspacePath } from '@/lib/utils';
 
 export function AuthenticatedWorkspaceRedirect() {
@@ -21,7 +22,7 @@ export function AuthenticatedWorkspaceRedirect() {
       return;
     }
 
-    const destination = getWorkspacePath(lastUsedWorkspaceSlug, 'dashboard');
+    const destination = getWorkspacePath(lastUsedWorkspaceSlug, DEFAULT_WORKSPACE_ROUTE);
 
     if (pathname !== destination) {
       router.replace(destination);

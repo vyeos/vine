@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
-import { getViewerPreferredDestination } from '@/lib/server-navigation';
+import { getViewerAppDestination } from '@/lib/server-navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsRoutePage() {
-  redirect((await getViewerPreferredDestination()) ?? '/');
+  redirect((await getViewerAppDestination()) ?? '/');
 }

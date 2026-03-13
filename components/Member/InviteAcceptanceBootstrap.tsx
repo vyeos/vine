@@ -40,7 +40,7 @@ export function InviteAcceptanceBootstrap() {
           // Ignore sessionStorage failures.
         }
 
-        router.replace(getWorkspacePath(result.workspaceSlug, 'dashboard'));
+        router.replace(getWorkspacePath(result.workspaceSlug));
       },
     });
   }, [isLoading, isPending, mutate, pathname, router, user?.email]);

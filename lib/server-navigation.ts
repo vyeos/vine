@@ -4,27 +4,16 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
-import type { UserLandingPage } from "@/types/auth";
 import {
   getWorkspacePath,
   LAST_WORKSPACE_COOKIE,
   parseLastWorkspaceSlugs,
 } from "@/lib/utils";
-
-const DEFAULT_LANDING_PAGE: UserLandingPage = "dashboard";
+import { DEFAULT_WORKSPACE_ROUTE } from "@/lib/navigation";
 
 type NavigationPreferences = {
-  defaultWorkspaceSlug?: string;
-  defaultLandingPage: UserLandingPage;
   memberships: Array<{ slug: string }>;
 };
-
-function toWorkspaceLandingPath(
-  workspaceSlug: string,
-  landingPage: UserLandingPage,
-) {
-  return getWorkspacePath(workspaceSlug, landingPage);
-}
 
 function getValidWorkspaceSlug(
   memberships: NavigationPreferences["memberships"],
@@ -40,19 +29,12 @@ function getValidWorkspaceSlug(
   );
 }
 
-function getPreferenceLandingPage(preferences: NavigationPreferences | null) {
-  return preferences?.defaultLandingPage ?? DEFAULT_LANDING_PAGE;
-}
-
-function getLandingDestination(
-  workspaceSlug: string | undefined,
-  landingPage: UserLandingPage,
-) {
+function getWorkspaceAppDestination(workspaceSlug: string | undefined) {
   if (!workspaceSlug) {
     return null;
   }
 
-  return toWorkspaceLandingPath(workspaceSlug, landingPage);
+  return getWorkspacePath(workspaceSlug, DEFAULT_WORKSPACE_ROUTE);
 }
 
 async function getLastUsedWorkspaceSlug() {
@@ -70,8 +52,6 @@ export const getViewerNavigationPreferences = cache(
     }
 
     return {
-      defaultWorkspaceSlug: overview.preferences.defaultWorkspaceSlug,
-      defaultLandingPage: overview.preferences.defaultLandingPage,
       memberships: overview.memberships.map((membership) => ({
         slug: membership.slug,
       })),
@@ -79,22 +59,7 @@ export const getViewerNavigationPreferences = cache(
   },
 );
 
-export const getViewerPreferredDestination = cache(async () => {
-  const preferences = await getViewerNavigationPreferences();
-
-  if (!preferences) {
-    return null;
-  }
-
-  const workspaceSlug = getValidWorkspaceSlug(preferences.memberships, [
-    preferences.defaultWorkspaceSlug,
-    preferences.memberships[0]?.slug,
-  ]);
-
-  return getLandingDestination(workspaceSlug, preferences.defaultLandingPage);
-});
-
-export const getViewerDashboardDestination = cache(async () => {
+export const getViewerAppDestination = cache(async () => {
   const preferences = await getViewerNavigationPreferences();
 
   if (!preferences) {
@@ -103,32 +68,8 @@ export const getViewerDashboardDestination = cache(async () => {
 
   const workspaceSlug = getValidWorkspaceSlug(preferences.memberships, [
     await getLastUsedWorkspaceSlug(),
-    preferences.defaultWorkspaceSlug,
     preferences.memberships[0]?.slug,
   ]);
 
-  return getLandingDestination(workspaceSlug, DEFAULT_LANDING_PAGE);
+  return getWorkspaceAppDestination(workspaceSlug);
 });
-
-export const getViewerDefaultWorkspaceDestination = cache(async () => {
-  const preferences = await getViewerNavigationPreferences();
-
-  if (!preferences?.defaultWorkspaceSlug) {
-    return null;
-  }
-
-  return getLandingDestination(
-    preferences.defaultWorkspaceSlug,
-    preferences.defaultLandingPage,
-  );
-});
-
-export const getViewerWorkspaceLandingDestination = cache(
-  async (workspaceSlug: string) => {
-    const preferences = await getViewerNavigationPreferences();
-    return toWorkspaceLandingPath(
-      workspaceSlug,
-      getPreferenceLandingPage(preferences),
-    );
-  },
-);

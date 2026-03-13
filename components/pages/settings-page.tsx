@@ -6,10 +6,8 @@ import {
   ArrowUpRight,
   BellRing,
   ImageIcon,
-  Mail,
   PencilLine,
   RefreshCcw,
-  ShieldCheck,
   TriangleAlert,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -43,19 +41,8 @@ import {
   useUpdateAvatar,
   useUpdateProfilePreferences,
 } from '@/hooks/userProfile';
-import type {
-  ProfileOverview as ProfileOverviewData,
-  User,
-  UserLandingPage,
-} from '@/types/auth';
+import type { ProfileOverview as ProfileOverviewData, User } from '@/types/auth';
 import { getWorkspacePath } from '@/lib/utils';
-
-const landingPageOptions: Array<{ value: UserLandingPage; label: string }> = [
-  { value: 'dashboard', label: 'Dashboard' },
-  { value: 'posts', label: 'Posts' },
-  { value: 'media', label: 'Media' },
-  { value: 'keys', label: 'API Keys' },
-];
 
 const themeOptions = [
   { value: 'system', label: 'System' },
@@ -66,7 +53,6 @@ const themeOptions = [
 const settingsSections = [
   { id: 'account', label: 'Account' },
   { id: 'memberships', label: 'Memberships' },
-  { id: 'security', label: 'Security' },
   { id: 'preferences', label: 'Preferences' },
   { id: 'account-actions', label: 'Account Actions' },
 ] as const;
@@ -165,8 +151,6 @@ export function SettingsPage() {
                   name: overview.user.name,
                   avatarMode: overview.user.avatarMode,
                   avatarUrl: overview.user.customAvatarUrl ?? '',
-                  defaultWorkspaceSlug: overview.preferences.defaultWorkspaceSlug ?? 'none',
-                  defaultLandingPage: overview.preferences.defaultLandingPage,
                   emailInvites: overview.preferences.emailInvites,
                   productUpdates: overview.preferences.productUpdates,
                   publishAlerts: overview.preferences.publishAlerts,
@@ -208,12 +192,6 @@ function SettingsHub({
     overview?.user.avatarMode ?? 'provider',
   );
   const [avatarUrl, setAvatarUrl] = useState(overview?.user.customAvatarUrl ?? '');
-  const [defaultWorkspaceSlug, setDefaultWorkspaceSlug] = useState(
-    overview?.preferences.defaultWorkspaceSlug ?? 'none',
-  );
-  const [defaultLandingPage, setDefaultLandingPage] = useState<UserLandingPage>(
-    overview?.preferences.defaultLandingPage ?? 'dashboard',
-  );
   const [emailInvites, setEmailInvites] = useState(
     overview?.preferences.emailInvites ?? true,
   );
@@ -251,17 +229,12 @@ function SettingsHub({
 
   const persistPreferences = useCallback(
     async (next: {
-      defaultWorkspaceSlug: string;
-      defaultLandingPage: UserLandingPage;
       emailInvites: boolean;
       productUpdates: boolean;
       publishAlerts: boolean;
       apiUsageAlerts: boolean;
     }) => {
       await updatePreferencesMutation.mutateAsync({
-        defaultWorkspaceSlug:
-          next.defaultWorkspaceSlug === 'none' ? undefined : next.defaultWorkspaceSlug,
-        defaultLandingPage: next.defaultLandingPage,
         emailInvites: next.emailInvites,
         productUpdates: next.productUpdates,
         publishAlerts: next.publishAlerts,
@@ -271,64 +244,6 @@ function SettingsHub({
     [updatePreferencesMutation],
   );
 
-  const handleDefaultWorkspaceChange = useCallback(
-    async (value: string) => {
-      const previousValue = defaultWorkspaceSlug;
-      setDefaultWorkspaceSlug(value);
-
-      try {
-        await persistPreferences({
-          defaultWorkspaceSlug: value,
-          defaultLandingPage,
-          emailInvites,
-          productUpdates,
-          publishAlerts,
-          apiUsageAlerts,
-        });
-      } catch {
-        setDefaultWorkspaceSlug(previousValue);
-      }
-    },
-    [
-      apiUsageAlerts,
-      defaultLandingPage,
-      defaultWorkspaceSlug,
-      emailInvites,
-      persistPreferences,
-      productUpdates,
-      publishAlerts,
-    ],
-  );
-
-  const handleDefaultLandingPageChange = useCallback(
-    async (value: UserLandingPage) => {
-      const previousValue = defaultLandingPage;
-      setDefaultLandingPage(value);
-
-      try {
-        await persistPreferences({
-          defaultWorkspaceSlug,
-          defaultLandingPage: value,
-          emailInvites,
-          productUpdates,
-          publishAlerts,
-          apiUsageAlerts,
-        });
-      } catch {
-        setDefaultLandingPage(previousValue);
-      }
-    },
-    [
-      apiUsageAlerts,
-      defaultLandingPage,
-      defaultWorkspaceSlug,
-      emailInvites,
-      persistPreferences,
-      productUpdates,
-      publishAlerts,
-    ],
-  );
-
   const handleEmailInvitesChange = useCallback(
     async (checked: boolean) => {
       const previousValue = emailInvites;
@@ -336,8 +251,6 @@ function SettingsHub({
 
       try {
         await persistPreferences({
-          defaultWorkspaceSlug,
-          defaultLandingPage,
           emailInvites: checked,
           productUpdates,
           publishAlerts,
@@ -349,8 +262,6 @@ function SettingsHub({
     },
     [
       apiUsageAlerts,
-      defaultLandingPage,
-      defaultWorkspaceSlug,
       emailInvites,
       persistPreferences,
       productUpdates,
@@ -365,8 +276,6 @@ function SettingsHub({
 
       try {
         await persistPreferences({
-          defaultWorkspaceSlug,
-          defaultLandingPage,
           emailInvites,
           productUpdates: checked,
           publishAlerts,
@@ -378,8 +287,6 @@ function SettingsHub({
     },
     [
       apiUsageAlerts,
-      defaultLandingPage,
-      defaultWorkspaceSlug,
       emailInvites,
       persistPreferences,
       productUpdates,
@@ -394,8 +301,6 @@ function SettingsHub({
 
       try {
         await persistPreferences({
-          defaultWorkspaceSlug,
-          defaultLandingPage,
           emailInvites,
           productUpdates,
           publishAlerts: checked,
@@ -407,8 +312,6 @@ function SettingsHub({
     },
     [
       apiUsageAlerts,
-      defaultLandingPage,
-      defaultWorkspaceSlug,
       emailInvites,
       persistPreferences,
       productUpdates,
@@ -423,8 +326,6 @@ function SettingsHub({
 
       try {
         await persistPreferences({
-          defaultWorkspaceSlug,
-          defaultLandingPage,
           emailInvites,
           productUpdates,
           publishAlerts,
@@ -436,8 +337,6 @@ function SettingsHub({
     },
     [
       apiUsageAlerts,
-      defaultLandingPage,
-      defaultWorkspaceSlug,
       emailInvites,
       persistPreferences,
       productUpdates,
@@ -571,7 +470,7 @@ function SettingsHub({
                     <Button
                       variant='ghost'
                       size='sm'
-                      onClick={() => router.push(getWorkspacePath(membership.slug, 'dashboard'))}
+                      onClick={() => router.push(getWorkspacePath(membership.slug))}
                     >
                       Open
                       <ArrowUpRight className='ml-1 h-3.5 w-3.5' />
@@ -586,35 +485,14 @@ function SettingsHub({
             </div>
           </SettingsSection>
 
-          {/* Security */}
-          <SettingsSection
-            id='security'
-            title='Security'
-            description='Sign-in method and session details.'
-          >
-            <div className='divide-y divide-border'>
-              <SettingRow
-                icon={<ShieldCheck className='h-4 w-4' />}
-                title='Sign-in provider'
-                description='Google OAuth'
-                action={<Badge variant='secondary'>Google</Badge>}
-              />
-              <SettingRow
-                icon={<Mail className='h-4 w-4' />}
-                title='Primary email'
-                description={overview?.user.email ?? user.email}
-              />
-            </div>
-          </SettingsSection>
-
           {/* Preferences */}
           <SettingsSection
             id='preferences'
             title='Preferences'
-            description='Defaults, notifications, and appearance.'
+            description='Notifications and appearance.'
           >
             <div className='flex flex-col gap-4'>
-              <div className='grid gap-4 sm:grid-cols-3'>
+              <div className='grid gap-4 sm:grid-cols-1'>
                 <div className='space-y-1.5'>
                   <Label htmlFor='profile-theme' className='text-xs text-muted-foreground'>
                     Theme
@@ -625,51 +503,6 @@ function SettingsHub({
                     </SelectTrigger>
                     <SelectContent>
                       {themeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='default-workspace' className='text-xs text-muted-foreground'>
-                    Default workspace
-                  </Label>
-                  <Select
-                    value={defaultWorkspaceSlug}
-                    onValueChange={handleDefaultWorkspaceChange}
-                  >
-                    <SelectTrigger id='default-workspace' className='w-full'>
-                      <SelectValue placeholder='Choose' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='none'>No preference</SelectItem>
-                      {(overview?.memberships ?? []).map((membership) => (
-                        <SelectItem key={membership.id} value={membership.slug}>
-                          {membership.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <Label htmlFor='default-landing-page' className='text-xs text-muted-foreground'>
-                    Landing page
-                  </Label>
-                  <Select
-                    value={defaultLandingPage}
-                    onValueChange={(value) =>
-                      handleDefaultLandingPageChange(value as UserLandingPage)
-                    }
-                  >
-                    <SelectTrigger id='default-landing-page' className='w-full'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {landingPageOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -743,7 +576,7 @@ function SettingsHub({
               <SettingRow
                 icon={<RefreshCcw className='h-4 w-4' />}
                 title='Reset preferences'
-                description='Revert workspace and notification preferences to defaults.'
+                description='Revert notification preferences to defaults.'
                 action={
                   <Button
                     variant='outline'
@@ -751,8 +584,6 @@ function SettingsHub({
                     onClick={() =>
                       resetPreferencesMutation.mutate(undefined, {
                         onSuccess: () => {
-                          setDefaultWorkspaceSlug('none');
-                          setDefaultLandingPage('dashboard');
                           setEmailInvites(true);
                           setProductUpdates(false);
                           setPublishAlerts(true);

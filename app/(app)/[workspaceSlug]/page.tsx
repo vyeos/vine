@@ -1,8 +1,6 @@
 import { redirect } from 'next/navigation';
-import {
-  getViewerDefaultWorkspaceDestination,
-  getViewerWorkspaceLandingDestination,
-} from '@/lib/server-navigation';
+import { DEFAULT_WORKSPACE_ROUTE } from '@/lib/navigation';
+import { getWorkspacePath } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +10,5 @@ export default async function WorkspaceIndexRedirect({
   params: Promise<{ workspaceSlug: string }>;
 }) {
   const { workspaceSlug } = await params;
-  redirect(
-    (await getViewerDefaultWorkspaceDestination()) ??
-      (await getViewerWorkspaceLandingDestination(workspaceSlug)),
-  );
+  redirect(getWorkspacePath(workspaceSlug, DEFAULT_WORKSPACE_ROUTE));
 }

@@ -44,7 +44,7 @@ export function AcceptInviteClient({ token }: { token: string }) {
           // Ignore sessionStorage failures.
         }
 
-        router.replace(getWorkspacePath(result.workspaceSlug, 'dashboard'));
+        router.replace(getWorkspacePath(result.workspaceSlug));
       },
       onError: (error) => {
         setErrorMessage(error instanceof Error ? error.message : 'Unable to accept this invitation.');

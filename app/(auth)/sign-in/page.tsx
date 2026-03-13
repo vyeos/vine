@@ -3,13 +3,13 @@ import { isAuthenticatedNextjs } from '@convex-dev/auth/nextjs/server';
 import Image from 'next/image';
 import { AuthenticatedWorkspaceRedirect } from '@/components/authenticated-workspace-redirect';
 import { GoogleSignInForm } from '@/components/google-sign-in-form';
-import { getViewerDashboardDestination } from '@/lib/server-navigation';
+import { getViewerAppDestination } from '@/lib/server-navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SignInPage() {
   if (await isAuthenticatedNextjs()) {
-    redirect((await getViewerDashboardDestination()) ?? '/');
+    redirect((await getViewerAppDestination()) ?? '/');
   }
 
   return (

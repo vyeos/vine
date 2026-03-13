@@ -10,6 +10,7 @@ import { useWorkspaceAuthors } from '@/hooks/useAuthor';
 import { useUserCategories } from '@/hooks/useCategory';
 import { useWorkspaceTags } from '@/hooks/useTag';
 import { useWorkspaceApiKeys } from '@/hooks/useApiKeys';
+import { DEFAULT_WORKSPACE_ROUTE } from '@/lib/navigation';
 import { getWorkspacePath } from '@/lib/utils';
 
 export function WorkspaceNavigationWarmup({
@@ -32,7 +33,7 @@ export function WorkspaceNavigationWarmup({
   useEffect(() => {
     if (!activeWorkspaceSlug) return;
 
-    const basePath = getWorkspacePath(activeWorkspaceSlug, 'dashboard');
+    const basePath = getWorkspacePath(activeWorkspaceSlug, DEFAULT_WORKSPACE_ROUTE);
     const commonRoutes = [
       basePath,
       getWorkspacePath(activeWorkspaceSlug, 'editor'),

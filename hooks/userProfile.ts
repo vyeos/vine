@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
 import { getErrorMessage } from '@/lib/error-utils';
-import type { ProfileOverview, UserLandingPage } from '@/types/auth';
+import type { ProfileOverview } from '@/types/auth';
 
 export function useProfileOverview() {
   const data = useQuery(api.users.profileOverview) as ProfileOverview | null | undefined;
@@ -90,8 +90,6 @@ export function useUpdateProfilePreferences() {
   const [isPending, setIsPending] = useState(false);
 
   const mutateAsync = async (data: {
-    defaultWorkspaceSlug?: string;
-    defaultLandingPage: UserLandingPage;
     emailInvites: boolean;
     productUpdates: boolean;
     publishAlerts: boolean;
@@ -114,8 +112,6 @@ export function useUpdateProfilePreferences() {
     mutateAsync,
     mutate: async (
       data: {
-        defaultWorkspaceSlug?: string;
-        defaultLandingPage: UserLandingPage;
         emailInvites: boolean;
         productUpdates: boolean;
         publishAlerts: boolean;

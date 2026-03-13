@@ -104,7 +104,7 @@ export function WorkspaceSwitcher() {
     const currentRoutePath = getCurrentRoutePath();
     const targetPath = currentRoutePath
       ? `${getWorkspacePath(slug)}${currentRoutePath}`
-      : getWorkspacePath(slug, "dashboard");
+      : getWorkspacePath(slug);
     router.push(targetPath);
   };
 
@@ -152,7 +152,7 @@ export function WorkspaceSwitcher() {
         const currentRoutePath = getCurrentRoutePath();
         const targetPath = currentRoutePath
           ? `${getWorkspacePath(workspace.slug)}${currentRoutePath}`
-          : getWorkspacePath(workspace.slug, "dashboard");
+          : getWorkspacePath(workspace.slug);
 
         return (
           <div

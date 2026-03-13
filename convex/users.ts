@@ -4,8 +4,6 @@ import { v } from 'convex/values';
 import { requireUserId } from './lib/workspace';
 
 const DEFAULT_PREFERENCES = {
-  defaultWorkspaceSlug: undefined,
-  defaultLandingPage: 'dashboard' as const,
   emailInvites: true,
   productUpdates: false,
   publishAlerts: true,
@@ -119,12 +117,6 @@ export const profileOverview = query({
         );
       });
 
-    const validDefaultWorkspaceSlug = membershipRecords.some(
-      (membership) => membership.slug === preferenceRecord?.defaultWorkspaceSlug,
-    )
-      ? preferenceRecord?.defaultWorkspaceSlug
-      : undefined;
-
     const avatarMode = profile?.avatarMode ?? 'provider';
     const customAvatarUrl = profile?.avatarUrl;
 
@@ -153,8 +145,6 @@ export const profileOverview = query({
         ...DEFAULT_PREFERENCES,
         ...(preferenceRecord
           ? {
-              defaultWorkspaceSlug: validDefaultWorkspaceSlug,
-              defaultLandingPage: preferenceRecord.defaultLandingPage,
               emailInvites: preferenceRecord.emailInvites,
               productUpdates: preferenceRecord.productUpdates,
               publishAlerts: preferenceRecord.publishAlerts,
@@ -247,13 +237,6 @@ export const updateAvatar = mutation({
 
 export const updatePreferences = mutation({
   args: {
-    defaultWorkspaceSlug: v.optional(v.string()),
-    defaultLandingPage: v.union(
-      v.literal('dashboard'),
-      v.literal('posts'),
-      v.literal('media'),
-      v.literal('keys'),
-    ),
     emailInvites: v.boolean(),
     productUpdates: v.boolean(),
     publishAlerts: v.boolean(),
@@ -262,29 +245,6 @@ export const updatePreferences = mutation({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
 
-    if (args.defaultWorkspaceSlug) {
-      const defaultWorkspaceSlug = args.defaultWorkspaceSlug;
-      const workspace = await ctx.db
-        .query('workspaces')
-        .withIndex('by_slug', (q) => q.eq('slug', defaultWorkspaceSlug))
-        .unique();
-
-      if (!workspace) {
-        throw new Error('Selected workspace was not found');
-      }
-
-      const membership = await ctx.db
-        .query('workspaceMembers')
-        .withIndex('by_workspace_id_and_user_id', (q) =>
-          q.eq('workspaceId', workspace._id).eq('userId', userId),
-        )
-        .unique();
-
-      if (!membership) {
-        throw new Error('You can only set one of your own workspaces as default');
-      }
-    }
-
     const now = Date.now();
     const existing = await ctx.db
       .query('userPreferences')
@@ -292,8 +252,6 @@ export const updatePreferences = mutation({
       .unique();
 
     const payload = {
-      defaultWorkspaceSlug: args.defaultWorkspaceSlug,
-      defaultLandingPage: args.defaultLandingPage,
       emailInvites: args.emailInvites,
       productUpdates: args.productUpdates,
       publishAlerts: args.publishAlerts,
