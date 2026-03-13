@@ -52,7 +52,7 @@ export function EditorLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !workspace) {
-      router.replace('/');
+      router.replace('/workspaces');
     }
   }, [isLoading, router, workspace]);
 

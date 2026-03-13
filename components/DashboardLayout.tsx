@@ -51,7 +51,7 @@ function StandardDashboardLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !workspace) {
-      router.replace('/');
+      router.replace('/workspaces');
     }
   }, [isLoading, router, workspace]);
 
