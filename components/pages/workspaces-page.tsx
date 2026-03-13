@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { CreateWorkspaceDialog } from "@/components/Workspace/CreateWorkspaceDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
 import { useUserWorkspaces } from "@/hooks/useWorkspace";
 import { Badge } from "@/components/ui/badge";
 import { getWorkspacePath } from "@/lib/utils";
@@ -34,15 +36,50 @@ const workspaceSurfaceClasses = [
 export function WorkspacesPage() {
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { data: user, isLoading: isLoadingUser } = useAuth();
   const { data: workspaces, isLoading } = useUserWorkspaces();
   const hasWorkspaces = workspaces.length > 0;
+  const userInitials = getInitials(user?.name || user?.email || "U");
 
   return (
     <>
       <main className="relative box-border min-h-dvh overflow-x-hidden flex items-center justify-center bg-background px-4 py-8 sm:px-6 sm:py-12">
         <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center">
           <div className="w-full max-w-3xl space-y-10 text-center">
-            <div className="space-y-3">
+            <div className="space-y-5">
+              <div className="mx-auto flex w-full max-w-md items-center justify-center">
+                {isLoadingUser ? (
+                  <div className="flex w-full items-center gap-2.5 rounded-xl border border-border/50 bg-card/70 px-3 py-2.5 shadow-sm">
+                    <Skeleton className="size-9 rounded-full" />
+                    <div className="flex-1 space-y-2 text-left">
+                      <Skeleton className="h-3.5 w-28 rounded-md" />
+                      <Skeleton className="h-3 w-40 rounded-md" />
+                    </div>
+                  </div>
+                ) : user ? (
+                  <div className="flex w-full items-center gap-2.5 rounded-xl border border-border/50 bg-card/80 px-3 py-2.5 text-left shadow-sm backdrop-blur-sm">
+                    <Avatar className="size-9 rounded-lg border border-border/50">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                        Signed in as
+                      </p>
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {user.name}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="space-y-3">
               <div className="space-y-2">
                 <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
                   Select a workspace
@@ -51,6 +88,7 @@ export function WorkspacesPage() {
                   Choose where you want to work, or spin up a new workspace for
                   another team, brand, or project.
                 </p>
+              </div>
               </div>
             </div>
 
