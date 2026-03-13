@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Mail, UserPlus, Shield, Crown, Users } from 'lucide-react';
+import { ArrowLeft, Copy, Link2, Mail, Shield, UserPlus, Users } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,18 +24,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { inviteMemberSchema } from '@/lib/validations/member';
-import { useInviteMember } from '@/hooks/useMember';
+import { useInviteMember, useSendInviteEmail } from '@/hooks/useMember';
 import { useWorkspaceSlug } from '@/hooks/useWorkspaceSlug';
 import { useWorkspaceVerification } from '@/hooks/useWorkspace';
-import type { InviteMemberData, MemberRole } from '@/types/member';
+import type { InvitableRole, InviteMemberData, InviteMemberResult, MemberRole } from '@/types/member';
 import { ROLE_HIERARCHY } from '@/types/member';
+import { getAcceptInvitePath } from '@/lib/invitations';
 import { getWorkspacePath } from '@/lib/utils';
 
 export default function InviteMemberPage() {
+  type InviteDeliveryState = 'sending' | 'sent' | 'failed';
+
   const workspaceSlug = useWorkspaceSlug();
   const { data: workspace } = useWorkspaceVerification(workspaceSlug);
   const router = useRouter();
   const inviteMemberMutation = useInviteMember(workspaceSlug);
+  const sendInviteEmail = useSendInviteEmail();
+  const [latestInvite, setLatestInvite] = useState<InviteMemberResult | null>(null);
+  const [inviteDeliveryState, setInviteDeliveryState] = useState<InviteDeliveryState | null>(null);
 
   const currentUserRole = (workspace?.role || 'member') as MemberRole;
 
@@ -43,7 +50,6 @@ export default function InviteMemberPage() {
     handleSubmit,
     control,
     formState: { errors },
-    watch,
     reset,
   } = useForm<InviteMemberData>({
     resolver: zodResolver(inviteMemberSchema),
@@ -59,38 +65,65 @@ export default function InviteMemberPage() {
     }
   }, [currentUserRole, router, workspaceSlug]);
 
-  const availableRoles: MemberRole[] = (['owner', 'admin', 'member'] as MemberRole[]).filter(
+  const availableRoles: InvitableRole[] = (['admin', 'member'] as InvitableRole[]).filter(
     (role) => ROLE_HIERARCHY[role] < ROLE_HIERARCHY[currentUserRole],
   );
+  const selectedRole = useWatch({ control, name: 'role' });
 
   const onFormSubmit = handleSubmit((data) => {
     inviteMemberMutation.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (result) => {
+        setLatestInvite(result);
+        setInviteDeliveryState('sending');
         reset();
-        router.push(getWorkspacePath(workspaceSlug!, 'members'));
+        if (workspaceSlug) {
+          void sendInviteEmail.mutate({
+            workspaceSlug,
+            invitationId: result.id,
+          }, {
+            onSuccess: () => setInviteDeliveryState('sent'),
+            onError: () => setInviteDeliveryState('failed'),
+          });
+        }
       },
     });
   });
 
   const getRoleIcon = (role: MemberRole) => {
     switch (role) {
-      case 'owner':
-        return <Crown className='h-4 w-4' />;
       case 'admin':
         return <Shield className='h-4 w-4' />;
       case 'member':
         return <Users className='h-4 w-4' />;
+      case 'owner':
+        return <Shield className='h-4 w-4' />;
     }
   };
 
   const getRoleDescription = (role: MemberRole) => {
     switch (role) {
-      case 'owner':
-        return 'Full access to manage workspace and all members';
       case 'admin':
         return 'Can manage members and workspace settings';
       case 'member':
         return 'Can view and contribute to workspace content';
+      case 'owner':
+        return 'Full access to manage workspace and all members';
+    }
+  };
+
+  const inviteLink =
+    latestInvite && typeof window !== 'undefined'
+      ? `${window.location.origin}${getAcceptInvitePath(latestInvite.token)}`
+      : '';
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast.success('Invite link copied');
+    } catch {
+      toast.error('Unable to copy invite link');
     }
   };
 
@@ -169,15 +202,15 @@ export default function InviteMemberPage() {
                     </Select>
                   )}
                 />
-                {watch('role') && (
+                {selectedRole && (
                   <div className='flex items-start gap-2 rounded-md border bg-muted/50 p-3 text-sm'>
-                    <div className='mt-0.5 text-muted-foreground'>{getRoleIcon(watch('role') as MemberRole)}</div>
+                    <div className='mt-0.5 text-muted-foreground'>{getRoleIcon(selectedRole as MemberRole)}</div>
                     <div className='flex-1'>
                       <div className='font-medium'>
-                        {watch('role')?.charAt(0).toUpperCase() + watch('role')?.slice(1)}
+                        {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}
                       </div>
                       <div className='text-xs text-muted-foreground'>
-                        {getRoleDescription(watch('role') as MemberRole)}
+                        {getRoleDescription(selectedRole as MemberRole)}
                       </div>
                     </div>
                   </div>
@@ -189,6 +222,46 @@ export default function InviteMemberPage() {
                 </p>
               )}
             </div>
+            {latestInvite && (
+              <div className='space-y-3 rounded-lg border bg-muted/40 p-4'>
+                <div className='flex items-start gap-3'>
+                  <div className='mt-0.5 flex h-8 w-8 items-center justify-center rounded-md bg-primary/10'>
+                    <Link2 className='h-4 w-4 text-primary' />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <p className='font-medium'>
+                      {inviteDeliveryState === 'sent'
+                        ? `Invitation email sent to ${latestInvite.email}`
+                        : inviteDeliveryState === 'sending'
+                          ? `Sending invitation email to ${latestInvite.email}`
+                          : `Invitation ready for ${latestInvite.email}`}
+                    </p>
+                    {inviteDeliveryState === 'sent' && (
+                      <p className='text-sm text-muted-foreground'>
+                        The mail has been sent. If you want, you can also send this link to the user.
+                      </p>
+                    )}
+                    {inviteDeliveryState === 'sending' && (
+                      <p className='text-sm text-muted-foreground'>
+                        We&apos;re sending the invite email now. You can still copy the link below if needed.
+                      </p>
+                    )}
+                    {inviteDeliveryState === 'failed' && (
+                      <p className='text-sm text-muted-foreground'>
+                        We couldn&apos;t send the email, so you can share this link with the user directly.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className='flex gap-2'>
+                  <Input value={inviteLink} readOnly className='font-mono text-xs' />
+                  <Button type='button' variant='outline' onClick={copyInviteLink}>
+                    <Copy className='mr-2 h-4 w-4' />
+                    Copy
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className='flex justify-end gap-3 pt-4'>
               <Button
                 type='button'

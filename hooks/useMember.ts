@@ -1,14 +1,17 @@
 'use client';
 
-import { useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
 import { useMutationState } from '@/hooks/useMutationState';
 import { getErrorMessage } from '@/lib/error-utils';
 import type {
+  AcceptInviteResult,
   InviteMemberData,
+  InviteMemberResult,
   Member,
   PendingInvitation,
+  SendInviteEmailResult,
   UpdateMemberRoleData,
 } from '@/types/member';
 
@@ -27,18 +30,18 @@ export function useMembers(workspaceSlug: string | undefined) {
 export function useInviteMember(workspaceSlug: string | undefined) {
   const mutation = useMutationState<
     { workspaceSlug: string; data: InviteMemberData },
-    PendingInvitation
+    InviteMemberResult
   >(api.members.invite);
 
   return {
     ...mutation,
     mutate: (
       data: InviteMemberData,
-      options?: { onSuccess?: (result: PendingInvitation) => void; onError?: (error: unknown) => void },
+      options?: { onSuccess?: (result: InviteMemberResult) => void; onError?: (error: unknown) => void },
     ) => {
       if (!workspaceSlug) return;
       void mutation
-        .mutateAsync({ workspaceSlug, data: { email: data.email, role: data.role === 'owner' ? 'admin' : data.role } })
+        .mutateAsync({ workspaceSlug, data })
         .then((result) => {
           toast.success('Invitation sent');
           options?.onSuccess?.(result);
@@ -47,6 +50,51 @@ export function useInviteMember(workspaceSlug: string | undefined) {
           toast.error(getErrorMessage(error, 'Failed to send invitation'));
           options?.onError?.(error);
         });
+    },
+  };
+}
+
+export function useAcceptInvite() {
+  const mutation = useMutationState<{ token: string }, AcceptInviteResult>(api.members.acceptInvite);
+
+  return {
+    ...mutation,
+    mutate: (
+      token: string,
+      options?: { onSuccess?: (result: AcceptInviteResult) => void; onError?: (error: unknown) => void },
+    ) => {
+      void mutation
+        .mutateAsync({ token })
+        .then((result) => {
+          toast.success(`Joined ${result.workspaceName}`);
+          options?.onSuccess?.(result);
+        })
+        .catch((error) => {
+          toast.error(getErrorMessage(error, 'Failed to accept invitation'));
+          options?.onError?.(error);
+        });
+    },
+  };
+}
+
+export function useSendInviteEmail() {
+  const sendInviteEmail = useAction(api.members.sendInviteEmail);
+
+  return {
+    mutate: async (
+      args: { workspaceSlug: string; invitationId: string },
+      options?: { onSuccess?: (result: SendInviteEmailResult) => void; onError?: (error: unknown) => void },
+    ) => {
+      try {
+        const result = (await sendInviteEmail({
+          workspaceSlug: args.workspaceSlug,
+          invitationId: args.invitationId as never,
+        })) as SendInviteEmailResult;
+        options?.onSuccess?.(result);
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Invitation created, but the email could not be sent'));
+        options?.onError?.(error);
+      }
     },
   };
 }
