@@ -157,7 +157,7 @@ export function WorkspaceSwitcher() {
         return (
           <div
             key={workspace.id}
-            className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${
+            className={`mb-1.5 flex items-center gap-2 rounded-md px-2 py-1.5 last:mb-0 ${
               isActive
                 ? "bg-primary/15 text-foreground ring-1 ring-primary/25"
                 : "hover:bg-accent"
