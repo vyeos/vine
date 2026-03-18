@@ -1,10 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardHeatmap } from "@/hooks/useDashboardHeatmap";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -49,6 +49,17 @@ function HeatmapSkeleton() {
     </div>
   );
 }
+
+const DynamicPingingDotChart = dynamic(
+  () =>
+    import("@/components/ui/pinging-dot-chart").then(
+      (mod) => mod.PingingDotChart,
+    ),
+  {
+    ssr: false,
+    loading: () => <HeatmapSkeleton />,
+  },
+);
 
 function RecentPostsSkeleton() {
   return (
@@ -198,7 +209,7 @@ export function DashboardPage() {
             <HeatmapSkeleton />
           ) : (
             <div className="animate-in fade-in-50 zoom-in-95 duration-300">
-              <PingingDotChart
+              <DynamicPingingDotChart
                 data={heatmap}
                 title={`Activity in ${workspaceName}`}
                 description={activitySummary}
